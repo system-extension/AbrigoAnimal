@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="theme-color" content="#173b31">
+<title>Entrar | Abrigo Animal Joinville</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body class="auth-page">
+<aside class="auth-cover">
+  <a class="brand" href="/"><img src="/assets/images/logo.png" alt="">Abrigo Animal<br>Joinville</a>
+  <div class="cover-copy">
+    <p class="ey">Cada gesto transforma uma vida</p>
+    <h1>Acompanhe seus pedidos.</h1>
+    <p>Entre para ver suas solicitações de adoção e apadrinhamento, gerenciar seu perfil e acompanhar o status de cada pet.</p>
+    <span class="cover-note">Adoção responsável em Joinville</span>
+  </div>
+</aside>
+<main class="auth-main">
+<section class="auth-card">
+  <p class="ey">BEM-VINDO(A) DE VOLTA</p>
+  <h1>Entre na sua conta.</h1>
+  <p class="lead">Veja suas solicitações e mantenha seus dados atualizados.</p>
+  <div id="alert" class="alert"></div>
+  <form id="form" class="grid">
+    <label class="full">E-mail<input required type="email" name="email" autocomplete="email" placeholder="voce@email.com"></label>
+    <label class="full">Senha<input required type="password" name="senha" autocomplete="current-password" placeholder="Sua senha"></label>
+    <div class="actions full">
+      <button class="btn" type="submit">Entrar</button>
+      <a class="muted" href="/cadastro.html">Criar minha conta</a>
+    </div>
+  </form>
+  <div class="demo">Para explorar o protótipo, use <b>demo@abrigojoinville.org.br</b><br>Senha: <b>abrigo123</b></div>
+</section>
+</main>
+<script src="/conta.js"></script>
+<script>
+contas();form.onsubmit=e=>{e.preventDefault();let d=Object.fromEntries(new FormData(form));let u=contas().find(x=>x.email===d.email.toLowerCase()&&x.senha===d.senha);if(!u)return notice('E-mail ou senha não conferem.',true);localStorage.setItem('abrigo_usuario',JSON.stringify(u));location.href=new URLSearchParams(location.search).get('voltar')||'/perfil.html'}
+</script>
+</body>
+</html>

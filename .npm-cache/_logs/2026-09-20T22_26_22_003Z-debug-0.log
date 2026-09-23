@@ -1,0 +1,46 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js
+1 info using npm@11.19.0
+2 info using node@v24.21.0
+3 silly config load:file:C:\Program Files\nodejs\node_modules\npm\npmrc
+4 silly config load:file:C:\Users\marcu\Documents\AbrigoAnimal\.npmrc
+5 silly config load:file:C:\Users\marcu\.npmrc
+6 silly config load:file:C:\Users\marcu\AppData\Roaming\npm\etc\npmrc
+7 verbose title npm install bootstrap@5.3.8
+8 verbose argv "install" "bootstrap@5.3.8"
+9 verbose logfile logs-max:10 dir:C:\Users\marcu\Documents\AbrigoAnimal\.npm-cache\_logs\2026-09-20T22_26_22_003Z-
+10 verbose logfile C:\Users\marcu\Documents\AbrigoAnimal\.npm-cache\_logs\2026-09-20T22_26_22_003Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly install-scripts no package.json at prefix Could not read package.json: Error: ENOENT: no such file or directory, open 'C:\Users\marcu\Documents\AbrigoAnimal\package.json'
+13 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+14 silly idealTree buildDeps
+15 silly fetch manifest bootstrap@5.3.8
+16 silly packumentCache full:https://registry.npmjs.org/bootstrap cache-miss
+17 http fetch GET 200 https://registry.npmjs.org/bootstrap 174ms (cache miss)
+18 silly packumentCache full:https://registry.npmjs.org/bootstrap set size:undefined disposed:false
+19 silly fetch manifest @popperjs/core@^2.11.8
+20 silly packumentCache full:https://registry.npmjs.org/@popperjs%2fcore cache-miss
+21 http fetch GET 200 https://registry.npmjs.org/npm 255ms
+22 http fetch GET 200 https://registry.npmjs.org/@popperjs%2fcore 272ms (cache miss)
+23 silly packumentCache full:https://registry.npmjs.org/@popperjs%2fcore set size:undefined disposed:false
+24 silly placeDep ROOT bootstrap@5.3.8 OK for:  want: 5.3.8
+25 silly placeDep ROOT @popperjs/core@2.11.8 OK for: bootstrap@5.3.8 want: ^2.11.8
+26 silly reify moves {}
+27 http cache @popperjs/core@https://registry.npmjs.org/@popperjs/core/-/core-2.11.8.tgz 0ms (cache hit)
+28 http cache bootstrap@https://registry.npmjs.org/bootstrap/-/bootstrap-5.3.8.tgz 0ms (cache hit)
+29 silly tarball no local data for @popperjs/core@https://registry.npmjs.org/@popperjs/core/-/core-2.11.8.tgz. Extracting by manifest.
+30 silly tarball no local data for bootstrap@https://registry.npmjs.org/bootstrap/-/bootstrap-5.3.8.tgz. Extracting by manifest.
+31 http fetch GET 200 https://registry.npmjs.org/@popperjs/core/-/core-2.11.8.tgz 565ms (cache miss)
+32 http fetch GET 200 https://registry.npmjs.org/bootstrap/-/bootstrap-5.3.8.tgz 582ms (cache miss)
+33 silly ADD node_modules/@popperjs/core
+34 silly ADD node_modules/bootstrap
+35 verbose cwd C:\Users\marcu\Documents\AbrigoAnimal
+36 verbose os Windows_NT 10.0.26200
+37 verbose node v24.21.0
+38 verbose npm  v11.19.0
+39 notice
+39 notice New major version of npm available! 11.19.0 -> 12.0.2
+39 notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+39 notice To update run: npm install -g npm@12.0.2
+39 notice  { force: true, Symbol(proc-log.meta): true }
+40 verbose exit 0
+41 info ok

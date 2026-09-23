@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="theme-color" content="#173b31">
+<title>Criar conta | Abrigo Animal Joinville</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body class="auth-page">
+<aside class="auth-cover">
+  <a class="brand" href="/"><img src="/assets/images/logo.png" alt="">Abrigo Animal<br>Joinville</a>
+  <div class="cover-copy">
+    <p class="ey">Faça parte da nossa rede</p>
+    <h1>Seu cadastro ajuda a equipe a conhecer você.</h1>
+    <p>Usamos estes dados para analisar pedidos de adoção e entrar em contato.</p>
+    <span class="cover-note">Dados usados no processo de adoção</span>
+  </div>
+</aside>
+<main class="auth-main">
+<section class="auth-card">
+  <p class="ey">CADASTRO PARA ADOÇÃO RESPONSÁVEL</p>
+  <h1>Vamos nos conhecer?</h1>
+  <p class="lead">Preencha seus dados para que a equipe possa analisar suas futuras solicitações.</p>
+  <div id="alert" class="alert"></div>
+  <form id="form" class="grid">
+    <label class="full">Nome completo<input required name="nome" autocomplete="name" placeholder="Seu nome completo"></label>
+    <label>CPF<input required name="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00"></label>
+    <label>Telefone<input required name="telefone" autocomplete="tel" inputmode="tel" placeholder="(47) 99999-9999"></label>
+    <label class="full">E-mail<input required type="email" name="email" autocomplete="email" placeholder="voce@email.com"></label>
+    <label>CEP<input required name="cep" inputmode="numeric" maxlength="9" placeholder="00000-000"></label>
+    <label>Endereço completo<input required name="endereco" autocomplete="street-address" placeholder="Rua, número, bairro, cidade e UF"></label>
+    <label class="full">Senha<input required minlength="6" type="password" name="senha" autocomplete="new-password" placeholder="Crie uma senha com ao menos 6 caracteres"></label>
+    <div class="actions full">
+      <button class="btn" type="submit">Criar minha conta</button>
+      <a class="muted" href="/login.html">Já tenho cadastro</a>
+    </div>
+  </form>
+  <div class="demo">Para explorar o protótipo, use <b>demo@abrigojoinville.org.br</b><br>Senha: <b>abrigo123</b></div>
+</section>
+</main>
+<script src="/conta.js"></script>
+<script>
+contas();
+const mascara = (el, fn) => el.addEventListener('input', () => {
+  const c = el.value.replace(/\D/g, '');
+  el.value = fn(c);
+});
+const cpfEl = document.querySelector('[name=cpf]');
+if (cpfEl) mascara(cpfEl, c => c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'));
+const cepEl = document.querySelector('[name=cep]');
+if (cepEl) mascara(cepEl, c => c.replace(/(\d{2})(\d{3})(\d{3})/, '$1.$2-$3'));
+form.onsubmit = e => {
+  e.preventDefault();
+  let d = Object.fromEntries(new FormData(form));
+  let u = contas().find(x => x.email === d.email.toLowerCase());
+  if (u) return notice('E-mail já cadastrado. Faça login.', true);
+  u = { nome: d.nome, email: d.email.toLowerCase(), senha: d.senha, cpf: d.cpf, telefone: d.telefone, cep: d.cep, endereco: d.endereco, foto: '' };
+  const lista = contas();
+  lista.push(u);
+  salvarContas(lista);
+  localStorage.setItem('abrigo_usuario', JSON.stringify(u));
+  location.href = '/perfil.html';
+};
+</script>
+</body>
+</html>
