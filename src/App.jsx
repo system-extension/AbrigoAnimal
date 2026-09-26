@@ -814,7 +814,7 @@ function DonationsPage() {
           <strong>Escaneie para contribuir</strong>
           <img
             className="pix-qr-code"
-            src="/pix-exemplo.png"
+            src={`${import.meta.env.BASE_URL}pix-exemplo.png`}
             alt="QR Code Pix demonstrativo"
           />
           <p className="pix-warning">
@@ -1201,6 +1201,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
