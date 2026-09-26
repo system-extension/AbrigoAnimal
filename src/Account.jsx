@@ -10,7 +10,7 @@ function Field({ label, ...props }) {
 }
 
 export function AuthPage({ register = false }) {
-  const { accounts, setAccounts, setUser, finishLogin } = useContext(AccountContext);
+  const { accounts, setAccounts, setUser, finishLogin, setIsAdmin } = useContext(AccountContext);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -20,6 +20,12 @@ export function AuthPage({ register = false }) {
     const data = Object.fromEntries(new FormData(event.currentTarget));
     const email = data.email.trim().toLowerCase();
     setError("");
+    if (!register && email === "admin@abrigo.demo" && data.password === "AdminDemo123!") {
+      setUser(null);
+      setIsAdmin(true);
+      window.location.assign("#/admin");
+      return;
+    }
     if (register) {
       if (!validCpf(data.cpf)) return setError("Confira o CPF informado. Os dígitos não são válidos.");
       if (data.name.trim().split(/\s+/).length < 2) return setError("Informe seu nome completo.");
@@ -46,6 +52,7 @@ export function AuthPage({ register = false }) {
           return;
         }
       }
+      setIsAdmin(false);
       setUser(account.id);
       finishLogin(account.id);
     } catch {
@@ -70,6 +77,7 @@ export function AuthPage({ register = false }) {
         <h2>{register ? "Crie sua conta" : "Entre na sua conta"}</h2>
         <p>{register ? "Preencha seus dados para começar." : "Acompanhe os vínculos que você está construindo."}</p>
         <p className="demo-note">Prévia demonstrativa: use dados fictícios. Os cadastros duram apenas até recarregar a página.</p>
+        {!register && <p className="demo-note">Acesso admin de demonstração: <strong>admin@abrigo.demo</strong><br />Senha: <strong>AdminDemo123!</strong></p>}
         <form className="application-form account-form" onSubmit={submit}>
           {register && <fieldset><legend>Seus dados</legend>
             <Field label="Nome completo" name="name" autoComplete="name" maxLength={100} />
@@ -114,13 +122,14 @@ export function AuthPage({ register = false }) {
 }
 
 export function ProfilePage({ DogCard, onApply, onSponsor }) {
-  const { account, setUser } = useContext(AccountContext);
+  const { account, setUser, pets: dogs, isAdmin } = useContext(AccountContext);
   const [tab, setTab] = useState("requests");
   const [filter, setFilter] = useState("all");
+  if (isAdmin) return <main className="section"><h1>Área administrativa</h1><a className="button" href="#/admin">Abrir painel</a></main>;
   if (!account) return <main className="section profile-guard"><h1>Seu espaço no abrigo</h1>
     <p>Entre na sua conta para acompanhar solicitações e ver seus favoritos.</p>
     <a className="button" href="#/login">Entrar na minha conta</a></main>;
-  const favorites = dogs.filter((dog) => account.favorites.includes(dog.name));
+  const favorites = dogs.filter((dog) => account.favorites.includes(dog.id));
   const requests = account.requests.filter((request) => filter === "all" || request.type === filter);
   const tabs = [["requests", "Minhas solicitações"], ["favorites", `Favoritos (${favorites.length})`], ["data", "Meus dados"]];
   return <main className="profile-page">
@@ -141,7 +150,7 @@ export function ProfilePage({ DogCard, onApply, onSponsor }) {
           <img src={request.dog.image} alt={request.dog.name} /><div>
             <p className="eyebrow">{request.type === "adoption" ? "Adoção" : "Apadrinhamento"}</p>
             <h3>{request.dog.name}</h3><p>Registrada em {new Date(request.date).toLocaleDateString("pt-BR")}</p>
-            <span className="request-status">Aguardando análise · simulação</span>
+            <span className="request-status">{request.status || "Aguardando análise"} · simulação</span>
             <p>Próximos passos: conversa com a equipe e avaliação da solicitação.</p>
           </div></article>)}</div> : <Empty title="Uma nova história pode começar aqui." text="Suas solicitações aparecerão neste espaço quando você demonstrar interesse em um cão." />}
       </>}
@@ -161,4 +170,5 @@ export function ProfilePage({ DogCard, onApply, onSponsor }) {
 function Empty({ title, text }) {
   return <div className="account-empty"><span aria-hidden="true">♡</span><h3>{title}</h3><p>{text}</p><a className="button" href="#/adocao">Conhecer os cães</a></div>;
 }
+
 

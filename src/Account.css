@@ -42,3 +42,16 @@
 @media (min-width: 901px) { .nav { gap: clamp(10px, 1.4vw, 24px); } .site-header { padding-inline: 24px; } }
 @media (max-width: 900px) { .account-layout { grid-template-columns: 1fr; } .account-story { padding: 36px 24px; } .account-story img, .account-story > span { display: none; } .account-story h1 { max-width: 600px; } .account-panel { max-width: none; } }
 @media (max-width: 620px) { .profile-heading { align-items: start; flex-direction: column; } .profile-details { grid-template-columns: 1fr; padding: 20px; } .profile-tabs { gap: 22px; } .request-card { flex-direction: column; } .request-card img { width: 100%; height: 200px; } }
+.account-form input, .account-form select, .profile-content select { font-size: 16px; }
+.account-panel { min-width: 0; }
+.profile-heading > div { min-width: 0; }
+.profile-heading h1 { overflow-wrap: anywhere; }
+.profile-tabs { overscroll-behavior-x: contain; }
+@media (max-width: 620px) {
+  .account-panel { padding: 32px 20px calc(48px + env(safe-area-inset-bottom, 0px)); }
+  .account-back { margin-bottom: 28px; }
+  .account-story h1 { font-size: 2.8rem; }
+  .profile-content .section-heading > label { display: grid; gap: 8px; width: 100%; }
+  .profile-content select { margin-left: 0; width: 100%; }
+  .request-card { min-width: 0; }
+}

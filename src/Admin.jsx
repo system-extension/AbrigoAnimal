@@ -7,11 +7,15 @@ const money = (value) => value.toLocaleString("pt-BR", { style: "currency", curr
 const statuses = ["Aguardando análise", "Em análise", "Aprovada", "Recusada"];
 const modules = [["overview", "◫", "Visão geral"], ["requests", "♡", "Solicitações"],
   ["pets", "♧", "Pets do abrigo"], ["finance", "↗", "Financeiro"], ["stock", "▤", "Estoque"]];
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+};
 
 export default function Admin() {
   const { isAdmin, setIsAdmin, pets, setPets, accounts, setAccounts, transactions,
     setTransactions, stock, setStock, movements, setMovements } = useContext(AccountContext);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [module, setModule] = useState("overview");
   const [editor, setEditor] = useState(null);
   const [search, setSearch] = useState("");
@@ -27,7 +31,7 @@ export default function Admin() {
   const pending = requests.filter((item) => !item.status || item.status === statuses[0]);
 
   function changeModule(next) {
-    setModule(next); setEditor(null); setSearch(""); setFilter("all"); setNotice(""); setError("");
+    setMenuOpen(false); setModule(next); setEditor(null); setSearch(""); setFilter("all"); setNotice(""); setError("");
   }
   function openEditor(value) { setEditor(value); setError(""); setNotice(""); }
   function save(event) {
@@ -70,10 +74,11 @@ export default function Admin() {
     && `${item.person} ${item.dog.name}`.toLowerCase().includes(search.toLowerCase()));
   const visiblePets = pets.filter((pet) => pet.name.toLowerCase().includes(search.toLowerCase()));
   return <div className="admin-shell">
-    <aside className="admin-sidebar">
+    <aside className={`admin-sidebar ${menuOpen ? "admin-sidebar--open" : ""}`}>
+      <button className="admin-mobile-toggle" aria-expanded={menuOpen} aria-controls="admin-navigation" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? "Fechar" : "Menu"}</button>
       <a href="#/inicio" className="admin-brand"><img src={logo} alt="" /><span>Abrigo Animal<small>ADMINISTRAÇÃO</small></span></a>
       <p className="admin-nav-label">ESPAÇO DE GESTÃO</p>
-      <nav aria-label="Módulos administrativos">{modules.map(([key, icon, title]) =>
+      <nav id="admin-navigation" aria-label="Módulos administrativos">{modules.map(([key, icon, title]) =>
         <button key={key} aria-current={module === key ? "page" : undefined} onClick={() => changeModule(key)}><span aria-hidden="true">{icon}</span>{title}</button>)}</nav>
       <div className="admin-sidebar-bottom"><a href="#/inicio">↗ Ver site público</a>
         <button onClick={() => { setIsAdmin(false); window.location.assign("#/login"); }}>Sair do painel</button></div>
@@ -119,7 +124,7 @@ export default function Admin() {
         </section>}
         {module === "pets" && <section className="admin-card">
           <div className="admin-toolbar"><label>Buscar pet<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nome do pet" /></label><button className="button" onClick={() => openEditor({ kind: "pet" })}>+ Novo pet</button></div>
-          <div className="admin-pet-grid">{visiblePets.map((pet) => <article className="admin-pet" key={pet.id}><img src={pet.image} alt={pet.name} /><div><h3>{pet.name}</h3><p>{pet.age} · {pet.size}</p><small>{pet.senior ? "Idoso · disponível para apadrinhamento" : "Disponível para adoção"}</small><button onClick={() => openEditor({ kind: "pet", item: pet })}>Editar pet →</button></div></article>)}</div>
+          <div className="admin-pet-list">{visiblePets.map((pet) => <article className="admin-pet" key={pet.id}><img src={pet.image} alt={pet.name} /><div className="admin-pet-name"><h3>{pet.name}</h3><small>{pet.senior ? "Idoso · apadrinhamento e adoção" : "Disponível para adoção"}</small></div><p className="admin-pet-age">{pet.age}</p><p className="admin-pet-size">{pet.size}</p><button aria-label={`Editar ${pet.name}`} onClick={() => openEditor({ kind: "pet", item: pet })}>Editar pet →</button></article>)}</div>
           {!visiblePets.length && <Empty text="Nenhum pet encontrado." />}
         </section>}
         {module === "finance" && <>
@@ -131,7 +136,7 @@ export default function Admin() {
           <Table headings={["Item", "Categoria", "Saldo", "Mínimo", "Situação", "Ação"]} rows={stock.map((item) => [item.name, item.category, `${item.quantity} ${item.unit}`, `${item.minimum} ${item.unit}`, item.quantity <= item.minimum ? "Repor estoque" : "Regular", <button key={item.id} className="admin-small-button" onClick={() => openEditor({ kind: "movement", item })}>Movimentar</button>])} />
           <h2 className="admin-history-title">Histórico de movimentações</h2><Table headings={["Data", "Item", "Tipo", "Quantidade", "Motivo"]} rows={movements.map((item) => [item.date.split("-").reverse().join("/"), item.item, item.type === "in" ? "Entrada" : "Saída", `${item.quantity} ${item.unit}`, item.reason])} />
         </section>}
-        {editor && <section className="admin-card admin-editor" aria-labelledby="editor-title">
+        {editor && <section ref={(node) => node?.scrollIntoView({ block: "start" })} className="admin-card admin-editor" aria-labelledby="editor-title">
           <div className="admin-toolbar"><h2 id="editor-title">{editor.kind === "pet" ? editor.item ? "Editar pet" : "Cadastrar pet" : editor.kind === "transaction" ? "Novo lançamento" : editor.kind === "stock" ? "Novo item" : `Movimentar ${editor.item.name}`}</h2><button className="text-button" onClick={() => setEditor(null)}>Cancelar</button></div>
           <form key={`${editor.kind}-${editor.item?.id || "new"}`} onSubmit={save} className="admin-form">
             {editor.kind === "pet" && <>
@@ -169,7 +174,7 @@ export default function Admin() {
   </div>;
 }
 
-function Stat({ label, value, detail }) { return <article className="admin-stat"><span>{label}</span><strong>{value}</strong>{detail && <small>{detail}</small>}</article>; }
+function Stat({ label, value, detail }) { return <article className={`admin-stat ${typeof value === "string" ? "admin-stat--money" : ""}`}><span>{label}</span><strong>{value}</strong>{detail && <small>{detail}</small>}</article>; }
 function Empty({ text }) { return <p className="admin-empty">{text}</p>; }
 function Input({ label, ...props }) { return <label>{label}<input required {...props} /></label>; }
 function Select({ label, values, ...props }) { return <label>{label}<select {...props}>{values.map((value) => <option key={Array.isArray(value) ? value[0] : value} value={Array.isArray(value) ? value[0] : value}>{Array.isArray(value) ? value[1] : value}</option>)}</select></label>; }
@@ -181,3 +186,8 @@ function Bars({ values, currency = false }) {
     <div className="admin-bar-track"><div style={{ width: `${value / maximum * 100}%`, background: index % 2 ? "var(--orange)" : "var(--green-dark)" }} /></div>
   </div>)}</div>;
 }
+
+
+
+
+

@@ -1,12 +1,14 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import logo from "./assets/logo-abrigo-animal.png";
 import walkVolunteers from "./assets/voluntarios-passeando-caes.webp";
-import { dogs, seniorDogsForSponsorship } from "./data/dogs";
+import { dogs as initialDogs } from "./data/dogs";
+import Admin from "./Admin.jsx";
 import "./App.css";
 import { AccountContext } from "./account";
 import { AuthPage, ProfilePage } from "./Account.jsx";
 
 const routes = {
+  "#/admin": "admin",
   "#/login": "login", "#/cadastro": "register", "#/perfil": "profile",
   "#/inicio": "home",
   "#/adocao": "adoption",
@@ -16,6 +18,7 @@ const routes = {
 };
 
 const pageMetadata = {
+  admin: { title: "Painel administrativo | Abrigo Animal Joinville", description: "Gestão do abrigo." },
   home: {
     title: "Abrigo Animal Joinville",
     description:
@@ -130,7 +133,7 @@ function ButtonLink({ to, children, secondary = false }) {
 }
 
 function Header({ page }) {
-  const { account } = useContext(AccountContext);
+  const { account, isAdmin } = useContext(AccountContext);
   const [open, setOpen] = useState(false);
   const links = [
     ["home", "#/inicio", "Início"],
@@ -178,10 +181,10 @@ function Header({ page }) {
         ))}
         <a
           className="nav-donate"
-          href={account ? "#/perfil" : "#/login"}
+          href={isAdmin ? "#/admin" : account ? "#/perfil" : "#/login"}
           onClick={() => setOpen(false)}
         >
-          {account ? "Meu perfil" : "Entrar na conta"} <Icon name="user" size={17} />
+          {isAdmin ? "Painel admin" : account ? "Meu perfil" : "Entrar na conta"} <Icon name="user" size={17} />
         </a>
       </nav>
     </header>
@@ -190,7 +193,7 @@ function Header({ page }) {
 
 function DogCard({ dog, action = "Conhecer", onApply, onSponsor }) {
   const { account, toggleFavorite } = useContext(AccountContext);
-  const favorite = account?.favorites.includes(dog.name) || false;
+  const favorite = account?.favorites.includes(dog.id) || false;
 
   return (
     <article className="dog-card">
@@ -317,7 +320,7 @@ function ApplicationForm({ request, onClose }) {
               className="application-form"
               onSubmit={(event) => {
                 event.preventDefault();
-                addRequest(request);
+                addRequest({ ...request, answers: Object.fromEntries(new FormData(event.currentTarget)) });
                 setSent(true);
               }}
             >
@@ -380,6 +383,7 @@ function ApplicationForm({ request, onClose }) {
 }
 
 function HomePage() {
+  const { pets: dogs } = useContext(AccountContext);
   const slides = [
     {
       eyebrow: "Adoção responsável",
@@ -395,7 +399,7 @@ function HomePage() {
       action: "Conheça os cães",
       image: dogs[14].image,
       imageAlt: "Cão disponível para adoção",
-      note: "20 cães esperam por uma família",
+      note: `${dogs.length} cães esperam por uma família`,
     },
     {
       eyebrow: "Apadrinhamento de idosos",
@@ -411,7 +415,7 @@ function HomePage() {
       action: "Apadrinhe um velhinho",
       image: dogs[0].image,
       imageAlt: "Bento, um cão idoso do abrigo",
-      note: "10 idosos precisam de apoio",
+      note: `${dogs.filter((dog) => dog.senior).length} idosos precisam de apoio`,
     },
     {
       eyebrow: "Passeios e visitas",
@@ -601,6 +605,7 @@ function HomePage() {
 }
 
 function AdoptionPage({ onApply, onSponsor }) {
+  const { pets: dogs } = useContext(AccountContext);
   const steps = [
     [
       "01",
@@ -638,7 +643,7 @@ function AdoptionPage({ onApply, onSponsor }) {
             <p className="eyebrow">Disponíveis para adoção</p>
             <h2>Conheça cada história</h2>
           </div>
-          <span className="result-count">20 cães esperando</span>
+          <span className="result-count">{dogs.length} cães esperando</span>
         </div>
         <div className="dog-grid">
           {dogs.map((dog) => (
@@ -670,6 +675,8 @@ function AdoptionPage({ onApply, onSponsor }) {
 }
 
 function SponsorshipPage({ onApply }) {
+  const { pets: dogs } = useContext(AccountContext);
+  const seniorDogsForSponsorship = dogs.filter((dog) => dog.senior);
   return (
     <main>
       <section className="sponsor-hero">
@@ -1092,6 +1099,19 @@ function Footer() {
 }
 
 function App() {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [pets, setPets] = useState(initialDogs);
+  const [transactions, setTransactions] = useState([
+    { id: "demo-income", date: "2026-09-01", description: "Doações do mês (exemplo)", category: "Doações", type: "income", amount: 4800 },
+    { id: "demo-food", date: "2026-09-05", description: "Compra de ração (exemplo)", category: "Alimentação", type: "expense", amount: 1650 },
+    { id: "demo-vet", date: "2026-09-12", description: "Consultas (exemplo)", category: "Veterinário", type: "expense", amount: 820 },
+  ]);
+  const [stock, setStock] = useState([
+    { id: "food", name: "Ração para cães adultos", category: "Alimentação", unit: "kg", quantity: 120, minimum: 50 },
+    { id: "senior-food", name: "Ração sênior", category: "Alimentação", unit: "kg", quantity: 15, minimum: 30 },
+    { id: "cleaning", name: "Desinfetante", category: "Limpeza", unit: "L", quantity: 5, minimum: 10 },
+  ]);
+  const [movements, setMovements] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [user, setUser] = useState(null);
   const [pending, setPending] = useState(null);
@@ -1105,8 +1125,8 @@ function App() {
       window.location.assign("#/login");
       return;
     }
-    updateAccount((item) => ({ ...item, favorites: item.favorites.includes(dog.name)
-      ? item.favorites.filter((name) => name !== dog.name) : [...item.favorites, dog.name] }));
+    updateAccount((item) => ({ ...item, favorites: item.favorites.includes(dog.id)
+      ? item.favorites.filter((name) => name !== dog.id) : [...item.favorites, dog.id] }));
   }
   function apply(dog, type) {
     if (!account) {
@@ -1120,13 +1140,13 @@ function App() {
     window.location.assign("#/perfil");
     if (pending?.type === "favorite") {
       setAccounts((current) => current.map((item) => item.id === accountId
-        ? { ...item, favorites: [...new Set([...item.favorites, pending.dog.name])] } : item));
+        ? { ...item, favorites: [...new Set([...item.favorites, pending.dog.id])] } : item));
     } else if (pending) setRequest(pending);
     setPending(null);
   }
   function addRequest(value) {
     updateAccount((item) => ({ ...item, requests: item.requests.some((entry) =>
-      entry.dog.name === value.dog.name && entry.type === value.type)
+      entry.dog.id === value.dog.id && entry.type === value.type)
       ? item.requests : [{ ...value, id: crypto.randomUUID(), date: new Date().toISOString() }, ...item.requests] }));
   }
   const [request, setRequest] = useState(null);
@@ -1147,6 +1167,7 @@ function App() {
     return () => window.removeEventListener("hashchange", updatePage);
   }, []);
   const pages = {
+    admin: <Admin />,
     login: <AuthPage key="login" />,
     register: <AuthPage key="register" register />,
     profile: <ProfilePage DogCard={DogCard} onApply={(dog) => apply(dog, "adoption")} onSponsor={(dog) => apply(dog, "sponsorship")} />,
@@ -1166,11 +1187,11 @@ function App() {
     walk: <WalkPage />,
   };
   return (
-    <AccountContext.Provider value={{ account, accounts, setAccounts, setUser, toggleFavorite, addRequest, finishLogin }}>
+    <AccountContext.Provider value={{ isAdmin, setIsAdmin, pets, setPets, transactions, setTransactions, stock, setStock, movements, setMovements, account, accounts, setAccounts, setUser, toggleFavorite, addRequest, finishLogin }}>
     <div className="site-shell">
-      <Header page={page} />
+      {page !== "admin" && <Header page={page} />}
       {pages[page]}
-      <Footer />
+      {page !== "admin" && <Footer />}
       {request && account && (
         <ApplicationForm request={request} onClose={() => setRequest(null)} />
       )}
@@ -1180,6 +1201,8 @@ function App() {
 }
 
 export default App;
+
+
 
 
 
