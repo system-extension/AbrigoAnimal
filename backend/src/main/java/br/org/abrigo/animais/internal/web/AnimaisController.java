@@ -52,11 +52,12 @@ class AnimaisController {
                                   @RequestParam(required = false) SituacaoAnimal situacao,
                                   @RequestParam(required = false) String ala,
                                   @RequestParam(required = false) Boolean idoso,
+                                  @RequestParam(required = false) Boolean semFoto,
                                   @RequestParam(defaultValue = "0") int pagina,
                                   @RequestParam(defaultValue = "20") int tamanho) {
         var pageable = PageRequest.of(Math.max(pagina, 0), Math.clamp(tamanho, 1, TAMANHO_MAXIMO_PAGINA),
                 Sort.by("nome"));
-        return gestao.listar(new FiltroAnimais(busca, especie, situacao, ala, idoso), pageable);
+        return gestao.listar(new FiltroAnimais(busca, especie, situacao, ala, idoso, semFoto), pageable);
     }
 
     @GetMapping("/{id}")

@@ -82,6 +82,50 @@ class AnimaisIntegrationTest extends IntegracaoTest {
     }
 
     @Test
+    void vacinasVaoJuntoNoCadastroEAVitrineMostraSoQuais() throws Exception {
+        String animal = cadastrarAnimal("""
+                {"nome": "Biscoito", "especie": "CAO",
+                 "vacinas": [{"tipo": "V8_V10", "ultimaDose": "2025-12-29"}, {"tipo": "ANTIRRABICA"}]}
+                """);
+        String id = campo(animal, "$.id");
+
+        mvc.perform(get("/api/animais/" + id).with(user(EQUIPE)))
+                .andExpect(jsonPath("$.vacinas.length()").value(2))
+                .andExpect(jsonPath("$.vacinas[?(@.tipo == 'V8_V10')].ultimaDose").value("2025-12-29"));
+
+        mvc.perform(get("/api/public/animais/" + campo(animal, "$.slug")))
+                .andExpect(jsonPath("$.vacinas.length()").value(2))
+                .andExpect(jsonPath("$.vacinas[0]").value("ANTIRRABICA"));
+
+        // editar com a lista vazia remove as vacinas (a lista enviada substitui a anterior)
+        mvc.perform(put("/api/animais/" + id).with(user(EQUIPE)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\": \"Biscoito\", \"especie\": \"CAO\", \"versao\": 0, \"vacinas\": []}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.vacinas.length()").value(0));
+    }
+
+    @Test
+    void vacinaComDataFuturaDa400() throws Exception {
+        mvc.perform(post("/api/animais").with(user(EQUIPE)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome": "Bob", "especie": "CAO", "vacinas": [{"tipo": "V8_V10", "ultimaDose": "2999-01-01"}]}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void filtroSemFotoMostraSoQuemPrecisaDeFoto() throws Exception {
+        String nome = "SemFoto-" + java.util.UUID.randomUUID().toString().substring(0, 6);
+        cadastrarAnimal("{\"nome\": \"" + nome + "\", \"especie\": \"CAO\"}");
+
+        mvc.perform(get("/api/animais").param("semFoto", "true").param("busca", nome).with(user(EQUIPE)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(1));
+    }
+
+    @Test
     void obitoTiraDaVitrine() throws Exception {
         String animal = cadastrarAnimalSimples("Estrela");
         String id = campo(animal, "$.id");

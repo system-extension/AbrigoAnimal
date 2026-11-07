@@ -4,6 +4,7 @@ import br.org.abrigo.animais.AnimalResumo;
 import br.org.abrigo.animais.AnimalVitrine;
 import br.org.abrigo.animais.internal.domain.Animal;
 import br.org.abrigo.animais.internal.domain.FotoAnimal;
+import br.org.abrigo.animais.internal.domain.VacinaAnimal;
 import br.org.abrigo.plataforma.ArmazenamentoArquivos;
 import org.springframework.stereotype.Component;
 
@@ -30,12 +31,12 @@ public class MapeadorAnimal {
                 a.getSituacao(), a.isVisivelNaVitrine());
     }
 
-    /** @param vacinasEmDia calculado fora (vem dos cuidados, que não fazem parte do agregado Animal). */
-    public AnimalVitrine paraVitrine(Animal a, Boolean vacinasEmDia) {
+    public AnimalVitrine paraVitrine(Animal a) {
         return new AnimalVitrine(
                 a.getNome(), a.getSlug(), a.getEspecie(), a.getSexo(), a.getCor(), a.getPorte(),
                 a.idadeEmAnos(hoje()), a.getCastrado(), a.isIdoso(), a.getDescricao(), a.getTemperamento(),
-                a.usaMedicacaoContinua(), a.getMedicacoes(), a.getCondicoesSaude(), vacinasEmDia,
+                a.usaMedicacaoContinua(), a.getMedicacoes(), a.getCondicoesSaude(),
+                a.getVacinas().stream().map(VacinaAnimal::getTipo).toList(),
                 a.getSituacao(),
                 a.fotoPrincipal().map(this::url).orElse(null),
                 a.getFotos().stream().map(this::url).toList());
@@ -53,7 +54,9 @@ public class MapeadorAnimal {
                 a.getPorte(), a.getDataNascimentoEstimada(), a.idadeEmAnos(hoje()), a.getCastrado(),
                 a.getChip(), a.getChipAdicional(), a.getAla(), a.getCanil(), a.isIdoso(),
                 a.getDescricao(), a.getTemperamento(), a.usaMedicacaoContinua(), a.getMedicacoes(),
-                a.getCondicoesSaude(), a.getSituacao(), a.getDataObito(), a.isVisivelNaVitrine(),
+                a.getCondicoesSaude(),
+                a.getVacinas().stream().map(v -> new AnimalDetalhe.Vacina(v.getTipo(), v.getUltimaDose())).toList(),
+                a.getSituacao(), a.getDataObito(), a.isVisivelNaVitrine(),
                 a.getFotos().stream()
                         .map(f -> new AnimalDetalhe.Foto(f.getId(), url(f), f.isPrincipal()))
                         .toList(),

@@ -3,6 +3,7 @@ package br.org.abrigo.animais.internal.domain;
 import br.org.abrigo.animais.Especie;
 import br.org.abrigo.animais.Porte;
 import br.org.abrigo.animais.Sexo;
+import br.org.abrigo.animais.TipoVacina;
 import br.org.abrigo.animais.SituacaoAnimal;
 import br.org.abrigo.plataforma.RegraNegocioException;
 import org.junit.jupiter.api.Test;
@@ -25,8 +26,13 @@ class AnimalTest {
     }
 
     static DadosAnimal dados(String nome, String chip, String chipAdicional, List<String> temperamento) {
+        return dados(nome, chip, chipAdicional, temperamento, List.of());
+    }
+
+    static DadosAnimal dados(String nome, String chip, String chipAdicional, List<String> temperamento,
+                             List<DadosAnimal.Vacina> vacinas) {
         return new DadosAnimal(nome, Especie.CAO, Sexo.MACHO, "caramelo", Porte.MEDIO, LocalDate.of(2014, 5, 1),
-                null, chip, chipAdicional, "A", "14A", true, "Dócil", temperamento, "Remédio X", null);
+                null, chip, chipAdicional, "A", "14A", true, "Dócil", temperamento, "Remédio X", null, vacinas);
     }
 
     @Test
@@ -159,11 +165,33 @@ class AnimalTest {
     }
 
     @Test
-    void soQuemEstaNoAbrigoRecebeCuidados() {
-        Animal a = Animal.cadastrar(dados("Bob"));
-        assertThat(a.estaSobCuidadoDaOng()).isTrue();
+    void vacinasSaoGravadasEmOrdemEADataEhOpcional() {
+        Animal a = Animal.cadastrar(dados("Biscoito", null, null, List.of(), List.of(
+                new DadosAnimal.Vacina(TipoVacina.V8_V10, LocalDate.of(2025, 12, 29)),
+                new DadosAnimal.Vacina(TipoVacina.ANTIRRABICA, null))));
 
-        a.alterarSituacao(SituacaoAnimal.ADOTADO);
-        assertThat(a.estaSobCuidadoDaOng()).isFalse();
+        assertThat(a.getVacinas()).extracting(VacinaAnimal::getTipo)
+                .containsExactly(TipoVacina.ANTIRRABICA, TipoVacina.V8_V10);
+        assertThat(a.getVacinas().get(0).getUltimaDose()).isNull();
+    }
+
+    @Test
+    void editarSubstituiAListaDeVacinas() {
+        Animal a = Animal.cadastrar(dados("Biscoito", null, null, List.of(),
+                List.of(new DadosAnimal.Vacina(TipoVacina.V8_V10, null))));
+
+        a.atualizar(dados("Biscoito", null, null, List.of(), List.of()));
+
+        assertThat(a.getVacinas()).isEmpty();
+    }
+
+    @Test
+    void mesmaVacinaDuasVezesEhRecusada() {
+        List<DadosAnimal.Vacina> repetidas = List.of(
+                new DadosAnimal.Vacina(TipoVacina.VERMIFUGO, null),
+                new DadosAnimal.Vacina(TipoVacina.VERMIFUGO, LocalDate.of(2026, 10, 5)));
+
+        assertThatThrownBy(() -> Animal.cadastrar(dados("Bob", null, null, List.of(), repetidas)))
+                .isInstanceOf(RegraNegocioException.class);
     }
 }

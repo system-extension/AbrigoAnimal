@@ -3,6 +3,7 @@ package br.org.abrigo.animais.internal.domain;
 import br.org.abrigo.animais.Especie;
 import br.org.abrigo.animais.Porte;
 import br.org.abrigo.animais.Sexo;
+import br.org.abrigo.animais.TipoVacina;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,5 +26,10 @@ public record DadosAnimal(
         String descricao,
         List<String> temperamento,
         String medicacoes,
-        String condicoesSaude) {
+        String condicoesSaude,
+        List<Vacina> vacinas) {
+
+    /** Vacina informada no formulário. */
+    public record Vacina(TipoVacina tipo, LocalDate ultimaDose) {
+    }
 }

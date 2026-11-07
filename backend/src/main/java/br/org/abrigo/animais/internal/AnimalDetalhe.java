@@ -4,6 +4,7 @@ import br.org.abrigo.animais.Especie;
 import br.org.abrigo.animais.Porte;
 import br.org.abrigo.animais.Sexo;
 import br.org.abrigo.animais.SituacaoAnimal;
+import br.org.abrigo.animais.TipoVacina;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -34,6 +35,7 @@ public record AnimalDetalhe(
         boolean medicacaoContinua,
         String medicacoes,
         String condicoesSaude,
+        List<Vacina> vacinas,
         SituacaoAnimal situacao,
         LocalDate dataObito,
         boolean visivelNaVitrine,
@@ -43,5 +45,8 @@ public record AnimalDetalhe(
         String atualizadoPor) {
 
     public record Foto(UUID id, String url, boolean principal) {
+    }
+
+    public record Vacina(TipoVacina tipo, LocalDate ultimaDose) {
     }
 }

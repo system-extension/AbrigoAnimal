@@ -4,14 +4,18 @@ import br.org.abrigo.animais.Especie;
 import br.org.abrigo.animais.Porte;
 import br.org.abrigo.animais.Sexo;
 import br.org.abrigo.animais.SituacaoAnimal;
+import br.org.abrigo.animais.TipoVacina;
 import br.org.abrigo.plataforma.EntidadeBase;
 import br.org.abrigo.plataforma.RegraNegocioException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Convert;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
@@ -22,8 +26,11 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -105,6 +112,16 @@ public class Animal extends EntidadeBase {
     @Column(nullable = false)
     private boolean visivelNaVitrine;
 
+    /**
+     * Vacinas já tomadas (opção B: registro no cadastro, sem gestão). Ao salvar, o Hibernate
+     * apaga as linhas do animal e grava a lista atual: simples e certo para poucas linhas.
+     */
+    @ElementCollection
+    @CollectionTable(name = "vacina_animal", joinColumns = @JoinColumn(name = "animal_id"))
+    @OrderBy("tipo")
+    @BatchSize(size = 50)
+    private List<VacinaAnimal> vacinas = new ArrayList<>();
+
     @OneToMany(mappedBy = "animal", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordem ASC")
     @BatchSize(size = 50)
@@ -171,6 +188,25 @@ public class Animal extends EntidadeBase {
         this.temperamento = new ArrayList<>(etiquetas);
         this.medicacoes = limpar(d.medicacoes());
         this.condicoesSaude = limpar(d.condicoesSaude());
+        substituirVacinas(d.vacinas());
+    }
+
+    private void substituirVacinas(List<DadosAnimal.Vacina> informadas) {
+        List<DadosAnimal.Vacina> lista = informadas == null ? List.of() : informadas;
+        Set<TipoVacina> vistos = new HashSet<>();
+        for (DadosAnimal.Vacina v : lista) {
+            if (v == null || v.tipo() == null) {
+                throw new RegraNegocioException("Informe qual vacina foi tomada.");
+            }
+            if (!vistos.add(v.tipo())) {
+                throw new RegraNegocioException("A vacina " + v.tipo() + " foi informada duas vezes.");
+            }
+        }
+        // limpar + adicionar (e não trocar a lista): o Hibernate acompanha a coleção original
+        this.vacinas.clear();
+        lista.stream()
+                .sorted(Comparator.comparing(v -> v.tipo().name())) // mesma ordem do @OrderBy no banco
+                .forEach(v -> this.vacinas.add(new VacinaAnimal(v.tipo(), v.ultimaDose())));
     }
 
     // ------------------------------------------------------------------ situação
@@ -269,11 +305,6 @@ public class Animal extends EntidadeBase {
         return situacao != SituacaoAnimal.OBITO;
     }
 
-    /** Recebe vacina/vermífugo? Óbito não; adotado também não (já não está sob cuidado da ONG). */
-    public boolean estaSobCuidadoDaOng() {
-        return situacao == SituacaoAnimal.DISPONIVEL || situacao == SituacaoAnimal.EM_TRATAMENTO;
-    }
-
     public boolean usaMedicacaoContinua() {
         return medicacoes != null;
     }
@@ -310,5 +341,6 @@ public class Animal extends EntidadeBase {
     public SituacaoAnimal getSituacao() { return situacao; }
     public LocalDate getDataObito() { return dataObito; }
     public boolean isVisivelNaVitrine() { return visivelNaVitrine; }
+    public List<VacinaAnimal> getVacinas() { return Collections.unmodifiableList(vacinas); }
     public List<FotoAnimal> getFotos() { return Collections.unmodifiableList(fotos); }
 }

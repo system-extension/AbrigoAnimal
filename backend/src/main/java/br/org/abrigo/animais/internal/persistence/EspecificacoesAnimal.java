@@ -68,10 +68,16 @@ public final class EspecificacoesAnimal {
             if (f.idoso() != null) {
                 p.add(cb.equal(root.<Boolean>get("idoso"), f.idoso()));
             }
+            if (Boolean.TRUE.equals(f.semFoto())) {
+                // pendência de cadastro: sem foto e ainda no abrigo (óbito não precisa mais de foto)
+                p.add(cb.isEmpty(root.<java.util.Collection<?>>get("fotos")));
+                p.add(cb.notEqual(root.get("situacao"), SituacaoAnimal.OBITO));
+            }
             return cb.and(p.toArray(Predicate[]::new));
         };
     }
 
-    public record FiltroAnimais(String busca, Especie especie, SituacaoAnimal situacao, String ala, Boolean idoso) {
+    public record FiltroAnimais(String busca, Especie especie, SituacaoAnimal situacao, String ala, Boolean idoso,
+                                Boolean semFoto) {
     }
 }

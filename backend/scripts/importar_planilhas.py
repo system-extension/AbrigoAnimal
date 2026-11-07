@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-Carga inicial: planilhas "CONTROLE DE VACINA" da ONG -> SQL (animal + cuidado).
+Carga inicial: planilhas "CONTROLE DE VACINA" da ONG -> SQL (animal + vacina_animal).
+
+Vacinas na opção B: grava QUAIS vacinas o animal tomou e a data da última dose.
+As colunas "REVACINAR" das planilhas são ignoradas (o sistema não faz gestão de vacinas).
 
 Uso (na pasta backend/, com o banco já criado pelo Flyway, ou seja, o backend já rodou uma vez):
 
@@ -181,27 +184,22 @@ def ler(caminho, rel):
         sexo = {"M": "MACHO", "F": "FEMEA"}.get((limpar(valores[1]) or "").upper(), "INDEFINIDO")
         if sexo == "INDEFINIDO":
             rel.add(origem, nome, f"sexo não reconhecido ({valores[1]!r})")
-        datas = {col: normalizar_data(valores[i], origem, nome, col, rel)
-                 for i, col in [(5, "VERMIFUGO"), (6, "V8"), (7, "V8 revacinar"), (8, "RAIVA"), (9, "RAIVA revacinar")]}
         ident = uuid.uuid5(NAMESPACE, chip or f"{Path(caminho).name}#{numero}")
-        cuidados = []
-        for tipo, aplicado, proximo in [("V8", datas["V8"], datas["V8 revacinar"]),
-                                        ("RAIVA", datas["RAIVA"], datas["RAIVA revacinar"]),
-                                        ("VERMIFUGO", datas["VERMIFUGO"], None)]:
-            if aplicado is None:
+        vacinas = []
+        # coluna da planilha -> TipoVacina do sistema
+        for coluna, rotulo, tipo in [(6, "V8", "V8_V10"), (8, "RAIVA", "ANTIRRABICA"), (5, "VERMIFUGO", "VERMIFUGO")]:
+            data = normalizar_data(valores[coluna], origem, nome, rotulo, rel)
+            if data is None:
                 if tipo != "VERMIFUGO":
-                    rel.add(origem, nome, f"sem data de {tipo}")
+                    rel.add(origem, nome, f"sem data de {rotulo}")
                 continue
-            if aplicado > dt.date.today():
-                rel.add(origem, nome, f"{tipo} com data futura ({aplicado:%d/%m/%Y}), ignorada")
-                continue
-            if proximo is not None and proximo <= aplicado:
-                rel.add(origem, nome, f"{tipo}: revacinar ({proximo:%d/%m/%Y}) não é depois da aplicação, ignorado")
-                proximo = None
-            cuidados.append((uuid.uuid5(NAMESPACE, f"{ident}:{tipo}:{aplicado}"), tipo, aplicado, proximo))
+            if data > dt.date.today():
+                rel.add(origem, nome, f"{rotulo} com data futura ({data:%d/%m/%Y}): entrou sem a data")
+                data = None
+            vacinas.append((tipo, data))
         animais.append(dict(id=ident, nome=nome, sexo=sexo, cor=normalizar_cor(valores[2]),
                             canil=normalizar_canil(valores[3]), chip=chip, chip2=chip2, ala=ala,
-                            idoso=ala in ALAS_DE_IDOSOS, cuidados=cuidados, origem=origem))
+                            idoso=ala in ALAS_DE_IDOSOS, vacinas=vacinas, origem=origem))
     if cabecalho is None:
         sys.exit(f"{caminho}: não achei a linha de cabeçalho (NOME, SEXO, COR...)")
     return animais
@@ -241,26 +239,24 @@ def main():
             f"{sql(a['sexo'])}, {sql(a['cor'])}, {sql(a['chip'])}, {sql(a['chip2'])}, {sql(a['ala'])}, "
             f"{sql(a['canil'])}, {sql(a['idoso'])}, 'DISPONIVEL', {sql(args.vitrine)}, now(), now(), "
             f"'{AUTOR}', '{AUTOR}') on conflict (id) do nothing;")
-        for cid, tipo, aplicado, proximo in a["cuidados"]:
+        for tipo, data in a["vacinas"]:
             linhas.append(
-                "insert into cuidado (id, versao, organizacao_id, animal_id, tipo, aplicado_em, proximo_em, "
-                "criado_em, atualizado_em, criado_por, atualizado_por) "
-                f"values ({sql(cid)}, 0, 1, {sql(a['id'])}, '{tipo}', {sql(aplicado)}, {sql(proximo)}, "
-                f"now(), now(), '{AUTOR}', '{AUTOR}') on conflict (id) do nothing;")
+                "insert into vacina_animal (animal_id, tipo, ultima_dose) "
+                f"values ({sql(a['id'])}, '{tipo}', {sql(data)}) on conflict (animal_id, tipo) do nothing;")
     linhas.append("commit;")
     (saida / "carga.sql").write_text("\n".join(linhas) + "\n", encoding="utf-8")
 
-    total_cuidados = sum(len(a["cuidados"]) for a in animais)
+    total_vacinas = sum(len(a["vacinas"]) for a in animais)
     md = [f"# Pendências da importação ({dt.date.today():%d/%m/%Y})", "",
           f"- Animais importados: **{len(animais)}**",
-          f"- Registros de vacina/vermífugo: **{total_cuidados}**",
+          f"- Vacinas registradas (última dose): **{total_vacinas}**",
           f"- Vitrine: **{'publicados' if args.vitrine else 'ocultos (publicar depois de pôr foto e descrição)'}**",
           f"- Marcados como idosos (estão nos asilos): **{sum(a['idoso'] for a in animais)}** — a equipe confere",
           "", "## Para a ONG conferir", "", "| Onde | Animal | O que conferir |", "|---|---|---|"]
     md += [f"| {o} | {n} | {p} |" for o, n, p in rel.itens] or ["| — | — | nada |"]
     (saida / "pendencias.md").write_text("\n".join(md) + "\n", encoding="utf-8")
 
-    print(f"{len(animais)} animais, {total_cuidados} registros de cuidado, {len(rel.itens)} pendências")
+    print(f"{len(animais)} animais, {total_vacinas} vacinas registradas, {len(rel.itens)} pendências")
     print(f"-> {saida / 'carga.sql'}\n-> {saida / 'pendencias.md'}")
 
 

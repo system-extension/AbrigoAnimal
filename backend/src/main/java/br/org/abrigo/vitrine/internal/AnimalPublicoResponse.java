@@ -5,6 +5,7 @@ import br.org.abrigo.animais.Especie;
 import br.org.abrigo.animais.Porte;
 import br.org.abrigo.animais.Sexo;
 import br.org.abrigo.animais.SituacaoAnimal;
+import br.org.abrigo.animais.TipoVacina;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ record AnimalPublicoResponse(
         boolean medicacaoContinua,
         String medicacoes,
         String condicoesSaude,
-        Boolean vacinasEmDia,
+        List<TipoVacina> vacinas,
         boolean disponivelParaAdocao,
         String fotoPrincipal,
         List<String> fotos) {
@@ -36,7 +37,7 @@ record AnimalPublicoResponse(
     static AnimalPublicoResponse de(AnimalVitrine a) {
         return new AnimalPublicoResponse(a.nome(), a.slug(), a.especie(), a.sexo(), a.cor(), a.porte(),
                 a.idadeAnos(), a.castrado(), a.idoso(), a.descricao(), a.temperamento(),
-                a.medicacaoContinua(), a.medicacoes(), a.condicoesSaude(), a.vacinasEmDia(),
+                a.medicacaoContinua(), a.medicacoes(), a.condicoesSaude(), a.vacinas(),
                 a.situacao() == SituacaoAnimal.DISPONIVEL, a.fotoPrincipal(), a.fotos());
     }
 }

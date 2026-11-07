@@ -22,8 +22,8 @@ public record AnimalVitrine(
         boolean medicacaoContinua,
         String medicacoes,
         String condicoesSaude,
-        // true = V8 e raiva em dia; false = alguma vencida; null = sem registro
-        Boolean vacinasEmDia,
+        // só QUAIS vacinas tomou (as datas ficam no painel)
+        List<TipoVacina> vacinas,
         SituacaoAnimal situacao,
         String fotoPrincipal,
         List<String> fotos) {
