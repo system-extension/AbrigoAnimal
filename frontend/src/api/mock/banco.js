@@ -148,7 +148,8 @@ export function publico(a) {
     descricao: a.descricao,
     medicacoes: a.medicacoes,
     condicoesSaude: a.condicoesSaude,
-    vacinas: a.vacinas,
+    // backend: true = V8 e raiva em dia; false = alguma vencida; null = sem registro
+    vacinasEmDia: a.vacinas ? true : null,
     disponivelParaAdocao: a.situacao === 'DISPONIVEL',
     fotoPrincipal: fotoPrincipal(a),
     fotos: fotosVisiveis(a).map((f) => f.url),

@@ -1,5 +1,5 @@
 /** Formulário público de interesse + caixa de solicitações da equipe. */
-import { USAR_API_REAL } from './config';
+import { USAR_API_REAL, apiReal } from './config';
 import { requisicao, query } from './cliente';
 import * as banco from './mock/banco';
 
@@ -10,7 +10,9 @@ import * as banco from './mock/banco';
  * `site` é a isca para robôs: precisa ir vazio.
  */
 export async function enviarInteresse(form) {
-  if (USAR_API_REAL) return requisicao('/api/public/solicitacoes', { metodo: 'POST', corpo: form });
+  // o formulário de interesse é do site público: segue a vitrine
+  if (apiReal('vitrine'))
+    return requisicao('/api/public/solicitacoes', { metodo: 'POST', corpo: form });
   return banco.responder(() => banco.receberSolicitacao(form));
 }
 
