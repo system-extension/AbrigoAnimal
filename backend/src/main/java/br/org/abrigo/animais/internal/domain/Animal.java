@@ -1,12 +1,14 @@
 package br.org.abrigo.animais.internal.domain;
 
 import br.org.abrigo.animais.Especie;
+import br.org.abrigo.animais.Porte;
 import br.org.abrigo.animais.Sexo;
 import br.org.abrigo.animais.SituacaoAnimal;
 import br.org.abrigo.plataforma.EntidadeBase;
 import br.org.abrigo.plataforma.RegraNegocioException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -33,6 +35,7 @@ import java.util.UUID;
 public class Animal extends EntidadeBase {
 
     public static final int MAXIMO_FOTOS = 10;
+    public static final int MAXIMO_TEMPERAMENTOS = 8;
 
     @Column(nullable = false, length = 120)
     private String nome;
@@ -52,38 +55,46 @@ public class Animal extends EntidadeBase {
     @Column(length = 80)
     private String cor;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    private Porte porte;
+
     private LocalDate dataNascimentoEstimada;
 
-    @Column(nullable = false)
-    private boolean castrado;
+    /** null = não informado (as planilhas da ONG não têm esse dado). */
+    private Boolean castrado;
 
+    /** Microchip: identidade real do animal (há vários "Marley", cada um com seu chip). */
     @Column(length = 40)
     private String chip;
 
+    /** Segundo chip, aplicado quando o primeiro parou de ler. */
     @Column(length = 40)
-    private String canil;
+    private String chipAdicional;
 
     @Column(length = 40)
     private String ala;
 
+    @Column(length = 40)
+    private String canil;
+
+    /** Marcado pela equipe (não há data de nascimento para calcular). Carro-chefe do apadrinhamento. */
     @Column(nullable = false)
     private boolean idoso;
-
-    @Column(nullable = false)
-    private boolean medicacaoContinua;
 
     @Column(columnDefinition = "text")
     private String descricao;
 
-    /** Ficha descritiva de saúde (RF-08). Texto livre, pública. NÃO é prontuário. */
+    @Convert(converter = ListaTextoConverter.class)
+    @Column(length = 300)
+    private List<String> temperamento = new ArrayList<>();
+
+    /** Ficha descritiva de saúde (RF-08). Texto livre, pública. NÃO é prontuário. Preenchida = medicação contínua. */
     @Column(columnDefinition = "text")
     private String medicacoes;
 
     @Column(columnDefinition = "text")
     private String condicoesSaude;
-
-    @Column(columnDefinition = "text")
-    private String vacinas;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -125,21 +136,41 @@ public class Animal extends EntidadeBase {
         if (d.especie() == null) {
             throw new RegraNegocioException("A espécie do animal é obrigatória.");
         }
+        String chip = limparChip(d.chip());
+        String chipAdicional = limparChip(d.chipAdicional());
+        if (chipAdicional != null && chipAdicional.equals(chip)) {
+            throw new RegraNegocioException("O chip adicional é igual ao chip principal.");
+        }
+        if (chipAdicional != null && chip == null) {
+            // não faz sentido ter "o segundo" sem o primeiro
+            chip = chipAdicional;
+            chipAdicional = null;
+        }
+        List<String> etiquetas = d.temperamento() == null ? List.of()
+                : d.temperamento().stream().map(Animal::limpar).filter(java.util.Objects::nonNull).distinct().toList();
+        if (etiquetas.size() > MAXIMO_TEMPERAMENTOS) {
+            throw new RegraNegocioException("Escolha no máximo " + MAXIMO_TEMPERAMENTOS + " características.");
+        }
+        if (etiquetas.stream().anyMatch(t -> t.contains(ListaTextoConverter.SEPARADOR) || t.length() > 30)) {
+            throw new RegraNegocioException("Característica inválida (máximo de 30 letras, sem \"|\").");
+        }
+
         this.nome = d.nome().trim();
         this.especie = d.especie();
         this.sexo = d.sexo() == null ? Sexo.INDEFINIDO : d.sexo();
         this.cor = limpar(d.cor());
+        this.porte = d.porte();
         this.dataNascimentoEstimada = d.dataNascimentoEstimada();
         this.castrado = d.castrado();
-        this.chip = limpar(d.chip());
-        this.canil = limpar(d.canil());
+        this.chip = chip;
+        this.chipAdicional = chipAdicional;
         this.ala = limpar(d.ala());
+        this.canil = limpar(d.canil());
         this.idoso = d.idoso();
-        this.medicacaoContinua = d.medicacaoContinua();
         this.descricao = limpar(d.descricao());
+        this.temperamento = new ArrayList<>(etiquetas);
         this.medicacoes = limpar(d.medicacoes());
         this.condicoesSaude = limpar(d.condicoesSaude());
-        this.vacinas = limpar(d.vacinas());
     }
 
     // ------------------------------------------------------------------ situação
@@ -238,8 +269,23 @@ public class Animal extends EntidadeBase {
         return situacao != SituacaoAnimal.OBITO;
     }
 
+    /** Recebe vacina/vermífugo? Óbito não; adotado também não (já não está sob cuidado da ONG). */
+    public boolean estaSobCuidadoDaOng() {
+        return situacao == SituacaoAnimal.DISPONIVEL || situacao == SituacaoAnimal.EM_TRATAMENTO;
+    }
+
+    public boolean usaMedicacaoContinua() {
+        return medicacoes != null;
+    }
+
     private static String limpar(String valor) {
         return valor == null || valor.isBlank() ? null : valor.trim();
+    }
+
+    /** Chip é número: tira espaços internos (a planilha tem "963003002252391/ 963003002176468"). */
+    public static String limparChip(String valor) {
+        String v = limpar(valor);
+        return v == null ? null : v.replaceAll("\\s+", "");
     }
 
     // ------------------------------------------------------------------ getters
@@ -249,17 +295,18 @@ public class Animal extends EntidadeBase {
     public Especie getEspecie() { return especie; }
     public Sexo getSexo() { return sexo; }
     public String getCor() { return cor; }
+    public Porte getPorte() { return porte; }
     public LocalDate getDataNascimentoEstimada() { return dataNascimentoEstimada; }
-    public boolean isCastrado() { return castrado; }
+    public Boolean getCastrado() { return castrado; }
     public String getChip() { return chip; }
-    public String getCanil() { return canil; }
+    public String getChipAdicional() { return chipAdicional; }
     public String getAla() { return ala; }
+    public String getCanil() { return canil; }
     public boolean isIdoso() { return idoso; }
-    public boolean isMedicacaoContinua() { return medicacaoContinua; }
     public String getDescricao() { return descricao; }
+    public List<String> getTemperamento() { return Collections.unmodifiableList(temperamento); }
     public String getMedicacoes() { return medicacoes; }
     public String getCondicoesSaude() { return condicoesSaude; }
-    public String getVacinas() { return vacinas; }
     public SituacaoAnimal getSituacao() { return situacao; }
     public LocalDate getDataObito() { return dataObito; }
     public boolean isVisivelNaVitrine() { return visivelNaVitrine; }

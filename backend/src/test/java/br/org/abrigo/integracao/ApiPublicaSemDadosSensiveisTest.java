@@ -18,7 +18,8 @@ class ApiPublicaSemDadosSensiveisTest extends IntegracaoTest {
 
     private static final List<String> CAMPOS_PROIBIDOS = List.of(
             "\"cpf\"", "\"telefone\"", "\"email\"", "\"endereco\"",   // pessoas
-            "\"chip\"", "\"canil\"", "\"ala\"",                       // localização interna do animal
+            "\"chip\"", "\"chipAdicional\"", "\"canil\"", "\"ala\"",    // identificação e localização interna
+            "\"observacao\"", "\"loteId\"",                                // registros internos de cuidados
             "\"criadoPor\"", "\"atualizadoPor\"", "\"id\"");          // dados internos
 
     private static final List<String> VALORES_PROIBIDOS = List.of(

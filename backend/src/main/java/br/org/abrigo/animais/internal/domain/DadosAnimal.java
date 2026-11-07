@@ -1,9 +1,11 @@
 package br.org.abrigo.animais.internal.domain;
 
 import br.org.abrigo.animais.Especie;
+import br.org.abrigo.animais.Porte;
 import br.org.abrigo.animais.Sexo;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /** Dados editáveis de um animal (entrada dos casos de uso cadastrar/atualizar). */
 public record DadosAnimal(
@@ -11,15 +13,17 @@ public record DadosAnimal(
         Especie especie,
         Sexo sexo,
         String cor,
+        Porte porte,
         LocalDate dataNascimentoEstimada,
-        boolean castrado,
+        // null = não informado
+        Boolean castrado,
         String chip,
-        String canil,
+        String chipAdicional,
         String ala,
+        String canil,
         boolean idoso,
-        boolean medicacaoContinua,
         String descricao,
+        List<String> temperamento,
         String medicacoes,
-        String condicoesSaude,
-        String vacinas) {
+        String condicoesSaude) {
 }

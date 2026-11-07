@@ -30,11 +30,12 @@ public class MapeadorAnimal {
                 a.getSituacao(), a.isVisivelNaVitrine());
     }
 
-    public AnimalVitrine paraVitrine(Animal a) {
+    /** @param vacinasEmDia calculado fora (vem dos cuidados, que não fazem parte do agregado Animal). */
+    public AnimalVitrine paraVitrine(Animal a, Boolean vacinasEmDia) {
         return new AnimalVitrine(
-                a.getNome(), a.getSlug(), a.getEspecie(), a.getSexo(), a.getCor(),
-                a.idadeEmAnos(hoje()), a.isCastrado(), a.isIdoso(), a.isMedicacaoContinua(),
-                a.getDescricao(), a.getMedicacoes(), a.getCondicoesSaude(), a.getVacinas(),
+                a.getNome(), a.getSlug(), a.getEspecie(), a.getSexo(), a.getCor(), a.getPorte(),
+                a.idadeEmAnos(hoje()), a.getCastrado(), a.isIdoso(), a.getDescricao(), a.getTemperamento(),
+                a.usaMedicacaoContinua(), a.getMedicacoes(), a.getCondicoesSaude(), vacinasEmDia,
                 a.getSituacao(),
                 a.fotoPrincipal().map(this::url).orElse(null),
                 a.getFotos().stream().map(this::url).toList());
@@ -42,17 +43,17 @@ public class MapeadorAnimal {
 
     public AnimalListagem paraListagem(Animal a) {
         return new AnimalListagem(a.getId(), a.getNome(), a.getEspecie(), a.getSexo(), a.getSituacao(),
-                a.isIdoso(), a.getAla(), a.getCanil(), a.isVisivelNaVitrine(),
+                a.isIdoso(), a.getChip(), a.getAla(), a.getCanil(), a.isVisivelNaVitrine(),
                 a.fotoPrincipal().map(this::url).orElse(null));
     }
 
     public AnimalDetalhe paraDetalhe(Animal a) {
         return new AnimalDetalhe(
                 a.getId(), a.getVersao(), a.getNome(), a.getSlug(), a.getEspecie(), a.getSexo(), a.getCor(),
-                a.getDataNascimentoEstimada(), a.idadeEmAnos(hoje()), a.isCastrado(),
-                a.getChip(), a.getCanil(), a.getAla(), a.isIdoso(), a.isMedicacaoContinua(),
-                a.getDescricao(), a.getMedicacoes(), a.getCondicoesSaude(), a.getVacinas(),
-                a.getSituacao(), a.getDataObito(), a.isVisivelNaVitrine(),
+                a.getPorte(), a.getDataNascimentoEstimada(), a.idadeEmAnos(hoje()), a.getCastrado(),
+                a.getChip(), a.getChipAdicional(), a.getAla(), a.getCanil(), a.isIdoso(),
+                a.getDescricao(), a.getTemperamento(), a.usaMedicacaoContinua(), a.getMedicacoes(),
+                a.getCondicoesSaude(), a.getSituacao(), a.getDataObito(), a.isVisivelNaVitrine(),
                 a.getFotos().stream()
                         .map(f -> new AnimalDetalhe.Foto(f.getId(), url(f), f.isPrincipal()))
                         .toList(),

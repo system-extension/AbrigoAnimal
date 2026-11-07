@@ -47,6 +47,41 @@ class AnimaisIntegrationTest extends IntegracaoTest {
     }
 
     @Test
+    void chipAdicionalTambemNaoPodeRepetir() throws Exception {
+        // o leitor pode ler qualquer um dos dois chips: os dois precisam ser únicos no cadastro inteiro
+        cadastrarAnimal("{\"nome\": \"Celi\", \"especie\": \"CAO\", \"chip\": \"CHIP-A-1\", \"chipAdicional\": \"CHIP-B-1\"}");
+
+        mvc.perform(post("/api/animais").with(user(EQUIPE)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\": \"Outro\", \"especie\": \"CAO\", \"chip\": \"CHIP-B-1\"}"))
+                .andExpect(status().is(422));
+    }
+
+    @Test
+    void buscaEncontraPeloChipAdicional() throws Exception {
+        cadastrarAnimal("{\"nome\": \"Bicuda\", \"especie\": \"CAO\", \"chip\": \"963003002252391\", \"chipAdicional\": \"963003002176468\"}");
+
+        mvc.perform(get("/api/animais").param("busca", "963 003 002 176468").with(user(EQUIPE)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.itens[0].nome").value("Bicuda"));
+    }
+
+    @Test
+    void vitrineMostraPorteTemperamentoECastradoNaoInformado() throws Exception {
+        String slug = campo(cadastrarAnimal("""
+                {"nome": "Margarida", "especie": "CAO", "porte": "MEDIO", "temperamento": ["Dócil", "Calmo"],
+                 "medicacoes": "Remédio para o coração"}
+                """), "$.slug");
+
+        mvc.perform(get("/api/public/animais/" + slug))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.porte").value("MEDIO"))
+                .andExpect(jsonPath("$.temperamento[1]").value("Calmo"))
+                .andExpect(jsonPath("$.castrado").isEmpty())
+                .andExpect(jsonPath("$.medicacaoContinua").value(true));
+    }
+
+    @Test
     void obitoTiraDaVitrine() throws Exception {
         String animal = cadastrarAnimalSimples("Estrela");
         String id = campo(animal, "$.id");

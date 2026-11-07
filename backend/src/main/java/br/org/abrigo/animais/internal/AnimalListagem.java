@@ -14,6 +14,7 @@ public record AnimalListagem(
         Sexo sexo,
         SituacaoAnimal situacao,
         boolean idoso,
+        String chip,
         String ala,
         String canil,
         boolean visivelNaVitrine,
