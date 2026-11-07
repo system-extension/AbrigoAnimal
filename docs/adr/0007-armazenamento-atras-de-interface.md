@@ -1,4 +1,4 @@
-# 0003 · Armazenamento de fotos atrás de uma interface
+# 0007 · Armazenamento de fotos atrás de uma interface
 
 **Status:** aceita (2026-09-26)
 

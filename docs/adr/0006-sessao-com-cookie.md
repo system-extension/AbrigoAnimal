@@ -1,4 +1,4 @@
-# 0002 · Sessão com cookie em vez de JWT
+# 0006 · Sessão com cookie em vez de JWT
 
 **Status:** aceita (2026-09-26)
 
