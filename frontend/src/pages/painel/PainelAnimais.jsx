@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import * as api from '../../api/animais';
 import { ESPECIES, rotulo, SITUACOES, textoIdade } from '../../api/rotulos';
-import useCarregar from '../../hooks/useCarregar';
+import usePaginacao from '../../hooks/usePaginacao';
+import useRolagemRestaurada from '../../hooks/useRolagemRestaurada';
 import FotoAnimal from '../../components/pets/FotoAnimal';
 import Carregando from '../../components/ui/Carregando';
 import Vazio from '../../components/ui/Vazio';
+import CarregarMais from '../../components/ui/CarregarMais';
 
 const FILTROS = [
   { rotulo: 'Todos', params: {} },
@@ -15,21 +17,41 @@ const FILTROS = [
   { rotulo: 'Adotados', params: { situacao: 'ADOTADO' } },
   { rotulo: 'Cães', params: { especie: 'CAO' } },
   { rotulo: 'Gatos', params: { especie: 'GATO' } },
+  { rotulo: 'Sem foto', params: { semFoto: 'true' } },
   { rotulo: 'Óbitos', params: { situacao: 'OBITO' } },
 ];
+
+const POR_PAGINA = 50; // máximo aceito pelo backend
 
 const cor = (s) => SITUACOES.find((x) => x.valor === s)?.cor ?? 'cinza';
 
 export default function PainelAnimais() {
   const [params, setParams] = useSearchParams();
   const [busca, setBusca] = useState('');
-  const filtros = Object.fromEntries(params);
-  const { dados, carregando, erro } = useCarregar(
-    () => api.listar({ ...filtros, busca: busca.trim() || undefined }),
-    [params.toString(), busca],
+  // ?ate=N é controle da paginação, não filtro
+  const { ate, ...filtros } = Object.fromEntries(params);
+  const chaveFiltros = JSON.stringify(filtros);
+  const { dados, carregando, erro, temMais, carregarMais, carregandoMais, erroMais } = usePaginacao(
+    (p) => api.listar({ ...filtros, busca: busca.trim() || undefined, ...p }),
+    [chaveFiltros, busca],
+    POR_PAGINA,
+    (a) => a.id,
+    {
+      paginasIniciais: Number(ate) || 1,
+      aoCarregarMais: (n) =>
+        setParams(
+          (atual) => {
+            const novo = new URLSearchParams(atual);
+            novo.set('ate', String(n));
+            return novo;
+          },
+          { replace: true },
+        ),
+    },
   );
+  useRolagemRestaurada('painel-animais' + chaveFiltros + busca, !carregando && Boolean(dados));
 
-  const ativo = (f) => JSON.stringify(f.params) === JSON.stringify(filtros);
+  const ativo = (f) => JSON.stringify(f.params) === chaveFiltros;
 
   return (
     <div>
@@ -47,7 +69,15 @@ export default function PainelAnimais() {
           className="entrada"
           placeholder="Buscar por nome ou chip"
           value={busca}
-          onChange={(e) => setBusca(e.target.value)}
+          onChange={(e) => {
+            setBusca(e.target.value);
+            if (ate) {
+              // busca nova começa da primeira página
+              const novo = new URLSearchParams(params);
+              novo.delete('ate');
+              setParams(novo, { replace: true });
+            }
+          }}
           aria-label="Buscar animal"
         />
       </div>
@@ -131,6 +161,14 @@ export default function PainelAnimais() {
               </li>
             ))}
           </ul>
+          <CarregarMais
+            mostrando={dados.itens.length}
+            total={dados.total}
+            temMais={temMais}
+            carregando={carregandoMais}
+            erro={erroMais}
+            aoCarregar={carregarMais}
+          />
         </>
       )}
     </div>

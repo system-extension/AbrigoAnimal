@@ -17,10 +17,10 @@ Abra `http://localhost:5173`. O painel fica em `/painel`.
 
 ## Dois modos
 
-| Modo                      | Como ligar                                                                          | De onde vêm os dados                                                              |
-| ------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| **Demonstração** (padrão) | nada a fazer                                                                        | Do próprio navegador (`src/api/mock`). Login: `equipe@abrigo.local` / `abrigo123` |
-| **API real**              | criar `frontend/.env.local` com `VITE_USAR_API=true` e subir o backend (porta 8080) | Do Spring Boot (`/api/...`)                                                       |
+| Modo                      | Como ligar                                                                                                                      | De onde vêm os dados                                                              |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **Demonstração** (padrão) | nada a fazer                                                                                                                    | Do próprio navegador (`src/api/mock`). Login: `equipe@abrigo.local` / `abrigo123` |
+| **API real**              | `frontend/.env.local` com `VITE_API_REAL=vitrine` (só o site público) ou `VITE_USAR_API=true` (tudo), e o backend na porta 8080 | Do Spring Boot (`/api/...`)                                                       |
 
 As telas não sabem em qual modo estão: elas só chamam funções de `src/api/`. Trocar de modo não exige mexer em tela.
 

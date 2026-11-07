@@ -13,14 +13,14 @@ async function carregarResumo() {
     animais.listar({ idoso: true, tamanho: 1 }),
     animais.listar({ situacao: 'EM_TRATAMENTO', tamanho: 1 }),
     listarSolicitacoes({ status: 'NOVA', tamanho: 5 }),
-    animais.listar({ tamanho: 500 }),
+    animais.listar({ semFoto: true, tamanho: 8 }),
   ]);
   return {
     disponiveis: disp.total,
     idosos: idosos.total,
     tratamento: trat.total,
     novas,
-    semFoto: semFoto.itens.filter((a) => !a.fotoPrincipal && a.situacao !== 'OBITO'),
+    semFoto,
   };
 }
 
@@ -103,7 +103,7 @@ export default function PainelInicio() {
             )}
           </section>
 
-          {r.semFoto.length > 0 && (
+          {r.semFoto.total > 0 && (
             <section className="cartao cartao-corpo mt-3">
               <h2 className="h6">
                 <i
@@ -111,13 +111,13 @@ export default function PainelInicio() {
                   style={{ color: 'var(--laranja)' }}
                   aria-hidden="true"
                 />
-                Sem foto ({r.semFoto.length})
+                Sem foto ({r.semFoto.total})
               </h2>
               <p className="texto-suave small">
                 Animais sem foto quase não recebem interesse na vitrine.
               </p>
               <div className="chips">
-                {r.semFoto.slice(0, 8).map((a) => (
+                {r.semFoto.itens.map((a) => (
                   <Link key={a.id} to={`/painel/animais/${a.id}#fotos`} className="chip">
                     <i
                       className={`fa-solid ${a.especie === 'GATO' ? 'fa-cat' : 'fa-dog'}`}
@@ -127,6 +127,11 @@ export default function PainelInicio() {
                   </Link>
                 ))}
               </div>
+              {r.semFoto.total > r.semFoto.itens.length && (
+                <Link to="/painel/animais?semFoto=true" className="botao botao-texto ps-0 mt-2">
+                  Ver todos os {r.semFoto.total}
+                </Link>
+              )}
             </section>
           )}
         </>

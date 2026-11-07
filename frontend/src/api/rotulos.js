@@ -21,7 +21,6 @@ export const SITUACOES = [
   { valor: 'OBITO', rotulo: 'Óbito', cor: 'cinza' },
 ];
 
-/** Proposta D3 (porte/temperamento): ainda não existe no backend. */
 export const PORTES = [
   { valor: 'PEQUENO', rotulo: 'Pequeno' },
   { valor: 'MEDIO', rotulo: 'Médio' },
@@ -40,8 +39,8 @@ export const TEMPERAMENTOS = [
   'Bom com crianças',
 ];
 
-/** Alas do abrigo (entrevista: 4 alas de cães e um gatil). */
-export const ALAS = ['Ala 1', 'Ala 2', 'Ala 3', 'Ala 4', 'Gatil'];
+/** Alas como nas planilhas da ONG (um arquivo por ala). O Asilo Osnilda é outro endereço. */
+export const ALAS = ['Ala A', 'Ala B', 'Ala C', 'Asilo Abrigo', 'Asilo Osnilda'];
 
 export const CORES_COMUNS = [
   'Caramelo',
@@ -53,7 +52,20 @@ export const CORES_COMUNS = [
   'Cinza',
 ];
 
-export const VACINAS_COMUNS = ['V8/V10', 'Antirrábica', 'Gripe canina', 'V3/V4 (gatos)'];
+/** Vacinas registradas no cadastro (TipoVacina no backend). Só QUAIS tomou, sem gestão de doses. */
+export const VACINAS = [
+  { valor: 'V8_V10', rotulo: 'V8/V10' },
+  { valor: 'ANTIRRABICA', rotulo: 'Antirrábica' },
+  { valor: 'VERMIFUGO', rotulo: 'Vermífugo' },
+  { valor: 'GRIPE_CANINA', rotulo: 'Gripe canina' },
+  { valor: 'V3_V4', rotulo: 'V3/V4 (gatos)' },
+];
+
+/** Castrado: null = a ONG ainda não sabe (melhor não afirmar nada na vitrine). */
+export const CASTRADO = [
+  { valor: true, rotulo: 'Sim' },
+  { valor: false, rotulo: 'Não' },
+];
 
 export const TIPOS_APOIO = [
   { valor: 'AFETIVO', rotulo: 'Afetivo', descricao: 'Visitas, passeios e carinho' },

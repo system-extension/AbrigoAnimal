@@ -40,7 +40,10 @@ const base = (id, campos) => ({
   descricao: '',
   medicacoes: '',
   condicoesSaude: '',
-  vacinas: 'V8/V10, Antirrábica',
+  vacinas: [
+    { tipo: 'ANTIRRABICA', ultimaDose: null },
+    { tipo: 'V8_V10', ultimaDose: null },
+  ],
   porte: null,
   temperamento: [],
   situacao: 'DISPONIVEL',
@@ -74,7 +77,7 @@ export const ANIMAIS_INICIAIS = [
       'Thor é um senhor tranquilo que adora um cantinho ao sol. Caminha devagar, mas não dispensa um passeio e um carinho atrás da orelha.',
     porte: 'GRANDE',
     temperamento: ['Calmo', 'Dócil', 'Carente'],
-    ala: 'Ala 2',
+    ala: 'Ala B',
     canil: '14',
     fotos: [foto('f-thor', 'mural2')],
   }),
@@ -88,7 +91,7 @@ export const ANIMAIS_INICIAIS = [
       'Mel é curiosa e muito sociável. Adora brincar com bolinhas e se dá bem com outros cães.',
     porte: 'MEDIO',
     temperamento: ['Brincalhão', 'Bom com cães'],
-    ala: 'Ala 1',
+    ala: 'Ala A',
     canil: '3',
     fotos: [foto('f-mel', 'mural1')],
   }),
@@ -104,7 +107,7 @@ export const ANIMAIS_INICIAIS = [
       'Bento é carinhoso e gosta de companhia. Está há anos no abrigo esperando alguém que queira passar tempo com ele.',
     porte: 'MEDIO',
     temperamento: ['Dócil', 'Carente'],
-    ala: 'Ala 3',
+    ala: 'Ala C',
     canil: '21',
     fotos: [foto('f-bento', 'mural4')],
   }),
@@ -117,7 +120,7 @@ export const ANIMAIS_INICIAIS = [
     descricao: 'Nina é esperta, atenta e muito companheira. Aprende rápido e ama um petisco.',
     porte: 'PEQUENO',
     temperamento: ['Brincalhão', 'Bom com crianças'],
-    ala: 'Ala 1',
+    ala: 'Ala A',
     canil: '6',
     fotos: [foto('f-nina', 'mural3')],
   }),
@@ -130,7 +133,7 @@ export const ANIMAIS_INICIAIS = [
     descricao: 'Pingo é o rei das fotos: sempre sorrindo. Ótimo para quem quer um amigo leal.',
     porte: 'MEDIO',
     temperamento: ['Dócil', 'Bom com crianças'],
-    ala: 'Ala 2',
+    ala: 'Ala B',
     canil: '9',
     fotos: [foto('f-pingo', 'gravata')],
   }),
@@ -146,7 +149,7 @@ export const ANIMAIS_INICIAIS = [
     condicoesSaude: 'Doença renal crônica controlada',
     descricao: 'Mingau é um gato idoso e calmo, que gosta de colo e de dormir perto da janela.',
     temperamento: ['Calmo', 'Carente'],
-    ala: 'Gatil',
+    ala: 'Ala C',
   }),
   base('a-pipoca', {
     nome: 'Pipoca',
@@ -157,7 +160,7 @@ export const ANIMAIS_INICIAIS = [
     dataNascimentoEstimada: anosAtras(1),
     descricao: 'Pipoca é ativa e brincalhona. Corre atrás de tudo que se mexe.',
     temperamento: ['Brincalhão', 'Bom com gatos'],
-    ala: 'Gatil',
+    ala: 'Ala C',
   }),
   base('a-luna', {
     nome: 'Luna',
@@ -170,7 +173,7 @@ export const ANIMAIS_INICIAIS = [
     condicoesSaude: 'Recuperação de cirurgia',
     descricao: 'Luna está se recuperando de uma cirurgia e logo volta para a vitrine.',
     porte: 'MEDIO',
-    ala: 'Ala 4',
+    ala: 'Asilo Osnilda',
     canil: '2',
   }),
 ].map((a) => ({
@@ -234,7 +237,7 @@ export const SOLICITACOES_INICIAIS = [
 ];
 
 /**
- * Vídeos de exemplo (ADR-005). Na versão real, o vídeo fica no canal do YouTube da ONG
+ * Vídeos de exemplo (ADR 0009). Na versão real, o vídeo fica no canal do YouTube da ONG
  * e o sistema guarda só o ID (youtubeId). Aqui, para a demonstração funcionar sem internet
  * e sem canal, usamos clipes curtos gerados a partir das fotos reais do mural.
  */

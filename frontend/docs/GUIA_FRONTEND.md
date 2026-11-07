@@ -5,7 +5,7 @@
 ```
 src/
 ├── api/                 ← ÚNICA camada que conhece o backend
-│   ├── config.js        chave VITE_USAR_API (demonstração × API real)
+│   ├── config.js        VITE_API_REAL / VITE_USAR_API (demonstração × API real, por área)
 │   ├── cliente.js       fetch com cookie de sessão, CSRF e erros padronizados
 │   ├── rotulos.js       códigos do backend → textos da tela (CAO → "Cão")
 │   ├── vitrine.js       público: lista e página do animal
@@ -75,7 +75,7 @@ O padrão visual (cores e seus papéis, tipografia, componentes e regras de uso)
 
 ## Ligando ao backend
 
-1. `frontend/.env.local` com `VITE_USAR_API=true`.
+1. `frontend/.env.local` (modelo em `.env.example`): `VITE_API_REAL=vitrine` liga só o site público; `VITE_USAR_API=true` liga tudo.
 2. Backend rodando em `localhost:8080` (o Vite repassa `/api` e `/arquivos`).
 3. Criar um usuário da equipe (`ADMIN_EMAIL`/`ADMIN_SENHA` no backend).
 
@@ -83,14 +83,17 @@ Diferenças conhecidas entre o modo demonstração e o backend atual:
 
 | Item                                       | Situação                                                                      |
 | ------------------------------------------ | ----------------------------------------------------------------------------- |
-| `porte` e `temperamento` (D3)              | O front já envia; o backend ainda **não guarda** (precisa de migration)       |
 | Idade e nº de padrinhos na lista do painel | O backend (`AnimalListagem`) ainda não devolve; a tela esconde quando não vem |
 | Lista "todos os apadrinhamentos"           | Não existe no backend; a tela usa `?pessoaId=` e `?animalId=`, que existem    |
+
+Listas longas (vitrine e animais do painel) são paginadas no backend; a tela usa `usePaginacao` + `<CarregarMais>`.
+
+Vacinas (ADR 0010): o cadastro registra só quais vacinas o animal tomou e a data da última dose (opcional). Não há gestão de vacinas.
 
 ## Pendências
 
 - Confirmar o **WhatsApp da ONG** em `src/utils/contato.js`.
 - Revisar o texto de **Privacidade** com a ONG.
 - Imagens geradas por IA (Rolê, Sobre) estão marcadas como "Imagem ilustrativa": trocar por fotos reais quando houver.
-- Vídeos (ADR-005): a seção já existe na tela (início e página do animal) com **clipes de exemplo** feitos das fotos do mural. Falta o backend guardar o ID do YouTube e a rota `GET /api/public/videos`; no modo API real a seção fica escondida até lá.
+- Vídeos (ADR 0009): a seção já existe na tela (início e página do animal) com **clipes de exemplo** feitos das fotos do mural. Falta o backend guardar o ID do YouTube e a rota `GET /api/public/videos`; no modo API real a seção fica escondida até lá.
 - PWA (instalar como app) e testes automatizados (Vitest/Playwright).

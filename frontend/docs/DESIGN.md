@@ -88,9 +88,10 @@ Campos de formulário sempre com 16 px (evita o zoom automático do iPhone).
 | Chip de filtro       | `.chip` + `aria-pressed`                              | Filtros e escolhas de um toque                                                                                |
 | Selo                 | `.selo .selo-verde` etc.                              | Status. Verde = positivo, laranja = em andamento, cinza = neutro                                              |
 | Campo                | `.campo` + `.entrada`                                 | Sempre com `<label>`; dica em `.campo-dica`, erro em `.campo-erro`                                            |
-| Interruptor          | `.interruptor`                                        | Sim/não (castrado, idoso, visível na vitrine)                                                                 |
+| Interruptor          | `.interruptor`                                        | Sim/não sem meio-termo (idoso, visível na vitrine). Se "não sei" for possível (castrado), use chips           |
 | Contador             | `.contador`                                           | Idade aproximada (− / +)                                                                                      |
 | Folha inferior       | `<Folha>`                                             | Menus e filtros no celular, em vez de modal                                                                   |
+| Carregar mais        | `<CarregarMais>` (`.carregar-mais`)                   | Fim de lista paginada: "Mostrando X de Y" + botão. Sem paginação numerada nem rolagem infinita                |
 
 Regras de uso:
 

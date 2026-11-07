@@ -17,7 +17,8 @@ import {
   VIDEOS_INICIAIS,
 } from './dados-iniciais';
 
-const CHAVE = 'abrigo-demo-v2';
+// v3: vacinas viraram lista [{ tipo, ultimaDose }] e as alas seguem as planilhas da ONG
+const CHAVE = 'abrigo-demo-v3';
 export const EVENTO_DADOS = 'abrigo:dados-alterados';
 
 function inicial() {
@@ -124,6 +125,7 @@ export function listagem(a) {
     sexo: a.sexo,
     situacao: a.situacao,
     idoso: a.idoso,
+    chip: a.chip,
     ala: a.ala,
     canil: a.canil,
     visivelNaVitrine: a.visivelNaVitrine,
@@ -148,8 +150,8 @@ export function publico(a) {
     descricao: a.descricao,
     medicacoes: a.medicacoes,
     condicoesSaude: a.condicoesSaude,
-    // backend: true = V8 e raiva em dia; false = alguma vencida; null = sem registro
-    vacinasEmDia: a.vacinas ? true : null,
+    // só QUAIS vacinas tomou: as datas ficam no painel
+    vacinas: (a.vacinas ?? []).map((v) => v.tipo),
     disponivelParaAdocao: a.situacao === 'DISPONIVEL',
     fotoPrincipal: fotoPrincipal(a),
     fotos: fotosVisiveis(a).map((f) => f.url),
@@ -162,7 +164,7 @@ export function publico(a) {
 /* ----------------------------- VÍDEOS ----------------------------- */
 
 /**
- * Formato proposto para GET /api/public/videos (ADR-005, ainda não existe no backend):
+ * Formato proposto para GET /api/public/videos (ADR 0009, ainda não existe no backend):
  * { id, titulo, youtubeId, animalNome, animalSlug } — aqui com `arquivo` e `poster` só para a demonstração.
  */
 export function videosPublicos(animalId) {
@@ -197,7 +199,7 @@ export function animalPorSlug(slug) {
   return a;
 }
 
-export function filtrarAnimais(lista, { busca, especie, sexo, situacao, ala, idoso }) {
+export function filtrarAnimais(lista, { busca, especie, sexo, situacao, ala, idoso, semFoto }) {
   const b = normal(busca);
   return lista.filter(
     (a) =>
@@ -206,7 +208,11 @@ export function filtrarAnimais(lista, { busca, especie, sexo, situacao, ala, ido
       (!sexo || a.sexo === sexo) &&
       (!situacao || a.situacao === situacao) &&
       (!ala || a.ala === ala) &&
-      (idoso === undefined || idoso === null || idoso === '' || String(a.idoso) === String(idoso)),
+      (idoso === undefined ||
+        idoso === null ||
+        idoso === '' ||
+        String(a.idoso) === String(idoso)) &&
+      (String(semFoto) !== 'true' || (fotosVisiveis(a).length === 0 && a.situacao !== 'OBITO')),
   );
 }
 
@@ -234,10 +240,10 @@ const CAMPOS_ANIMAL = [
   'dataNascimentoEstimada',
   'castrado',
   'chip',
+  'chipAdicional',
   'canil',
   'ala',
   'idoso',
-  'medicacaoContinua',
   'descricao',
   'medicacoes',
   'condicoesSaude',
@@ -246,6 +252,16 @@ const CAMPOS_ANIMAL = [
   'temperamento',
 ];
 const recortar = (dados) => Object.fromEntries(CAMPOS_ANIMAL.map((c) => [c, dados[c] ?? null]));
+
+/** Mesmas regras do backend: castrado null = não informado; medicação contínua = medicações preenchidas. */
+const normalizar = (dados) => ({
+  nome: dados.nome.trim(),
+  castrado: typeof dados.castrado === 'boolean' ? dados.castrado : null,
+  idoso: Boolean(dados.idoso),
+  medicacaoContinua: Boolean(dados.medicacoes),
+  temperamento: dados.temperamento ?? [],
+  vacinas: [...(dados.vacinas ?? [])].sort((x, y) => x.tipo.localeCompare(y.tipo)),
+});
 
 export function criarAnimal(dados) {
   validarAnimal(dados);
@@ -261,11 +277,7 @@ export function criarAnimal(dados) {
     atualizadoEm: agora(),
     atualizadoPor: 'você (demonstração)',
     ...recortar(dados),
-    nome: dados.nome.trim(),
-    castrado: Boolean(dados.castrado),
-    idoso: Boolean(dados.idoso),
-    medicacaoContinua: Boolean(dados.medicacaoContinua),
-    temperamento: dados.temperamento ?? [],
+    ...normalizar(dados),
   };
   estado.animais = [a, ...estado.animais];
   gravar();
@@ -280,11 +292,7 @@ export function editarAnimal(animalId, dados) {
     });
   validarAnimal({ ...dados, id: animalId });
   Object.assign(a, recortar(dados), {
-    nome: dados.nome.trim(),
-    castrado: Boolean(dados.castrado),
-    idoso: Boolean(dados.idoso),
-    medicacaoContinua: Boolean(dados.medicacaoContinua),
-    temperamento: dados.temperamento ?? [],
+    ...normalizar(dados),
     versao: a.versao + 1,
     atualizadoEm: agora(),
     atualizadoPor: 'você (demonstração)',
@@ -364,7 +372,7 @@ export function pessoas(busca) {
         normal(p.email).includes(b) ||
         normal(p.telefone)
           .replace(/\D/g, '')
-          .includes(b.replace(/\D/g, '') || '§'),
+          .includes(b.replace(/\D/g, '') || ''),
     )
     .sort((a, b2) => a.nome.localeCompare(b2.nome));
 }

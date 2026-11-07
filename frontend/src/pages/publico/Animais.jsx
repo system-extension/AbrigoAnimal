@@ -1,9 +1,13 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { listarAnimais } from '../../api/vitrine';
-import useCarregar from '../../hooks/useCarregar';
+import usePaginacao from '../../hooks/usePaginacao';
+import useRolagemRestaurada from '../../hooks/useRolagemRestaurada';
 import CartaoAnimal, { CartaoAnimalEsqueleto } from '../../components/pets/CartaoAnimal';
 import Vazio from '../../components/ui/Vazio';
+import CarregarMais from '../../components/ui/CarregarMais';
 import './paginas.css';
+
+const POR_PAGINA = 24;
 
 /** Filtros rápidos. Ficam na URL (?especie=GATO&idoso=true): dá para compartilhar o link já filtrado. */
 const FILTROS = [
@@ -23,10 +27,27 @@ export default function Animais() {
     idoso: params.get('idoso') || undefined,
   };
   const chave = JSON.stringify(filtros);
-  const { dados, carregando, erro, recarregar } = useCarregar(
-    () => listarAnimais(filtros),
-    [chave],
-  );
+  const { dados, carregando, erro, recarregar, temMais, carregarMais, carregandoMais, erroMais } =
+    usePaginacao(
+      (p) => listarAnimais({ ...filtros, ...p }),
+      [chave],
+      POR_PAGINA,
+      (a) => a.slug,
+      {
+        // ?ate=3: quantas páginas estavam na tela (voltar da ficha não perde o que já foi carregado)
+        paginasIniciais: Number(params.get('ate')) || 1,
+        aoCarregarMais: (n) =>
+          setParams(
+            (atual) => {
+              const novo = new URLSearchParams(atual);
+              novo.set('ate', String(n));
+              return novo;
+            },
+            { replace: true },
+          ),
+      },
+    );
+  useRolagemRestaurada('vitrine' + chave, !carregando && Boolean(dados));
 
   const ativo = (f) =>
     Object.keys(f.params).length === 0
@@ -35,6 +56,7 @@ export default function Animais() {
 
   const alternar = (f) => {
     const novo = new URLSearchParams(params);
+    novo.delete('ate'); // filtro novo começa da primeira página
     if (Object.keys(f.params).length === 0) return setParams({}, { replace: true });
     const ligado = ativo(f);
     Object.entries(f.params).forEach(([k, v]) => (ligado ? novo.delete(k) : novo.set(k, v)));
@@ -101,6 +123,16 @@ export default function Animais() {
             <CartaoAnimal key={a.slug} animal={a} />
           ))}
         </div>
+      )}
+      {!erro && !carregando && (
+        <CarregarMais
+          mostrando={dados.itens.length}
+          total={dados.total}
+          temMais={temMais}
+          carregando={carregandoMais}
+          erro={erroMais}
+          aoCarregar={carregarMais}
+        />
       )}
       {!filtros.idoso && (
         <aside className="nota-apadrinhar">

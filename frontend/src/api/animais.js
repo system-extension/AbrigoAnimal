@@ -5,7 +5,7 @@ import * as banco from './mock/banco';
 
 const espera = (fn) => banco.responder(fn);
 
-/** Lista leve (AnimalListagem). Filtros: busca, especie, situacao, ala, idoso, pagina, tamanho */
+/** Lista leve (AnimalListagem). Filtros: busca, especie, situacao, ala, idoso, semFoto, pagina, tamanho */
 export async function listar(filtros = {}) {
   if (USAR_API_REAL) return requisicao('/api/animais' + query(filtros));
   return banco.responder(() => {
@@ -13,7 +13,7 @@ export async function listar(filtros = {}) {
       .filtrarAnimais(banco.animais(), filtros)
       .sort((a, b) => a.nome.localeCompare(b.nome))
       .map(banco.listagem);
-    return banco.paginar(lista, filtros.pagina, filtros.tamanho ?? 100);
+    return banco.paginar(lista, filtros.pagina, filtros.tamanho ?? 20); // backend: padrão 20, máx. 50
   });
 }
 

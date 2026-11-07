@@ -522,6 +522,17 @@ textarea.entrada {
 .texto-suave {
   color: var(--texto-suave);
 }
+.texto-perigo {
+  color: var(--perigo);
+}
+
+/* Rodapé de lista paginada (<CarregarMais>) */
+.carregar-mais {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 0 0.5rem;
+}
 
 /* ---------------------------- Avisos (toast) ------------------------ */
 .avisos {

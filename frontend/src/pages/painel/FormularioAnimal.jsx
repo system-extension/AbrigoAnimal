@@ -4,13 +4,14 @@ import * as api from '../../api/animais';
 import * as apadrinhamentos from '../../api/apadrinhamentos';
 import {
   ALAS,
+  CASTRADO,
   CORES_COMUNS,
   ESPECIES,
   PORTES,
   SEXOS,
   SITUACOES,
   TEMPERAMENTOS,
-  VACINAS_COMUNS,
+  VACINAS,
   dataPorIdade,
   idadePorData,
   rotulo,
@@ -24,7 +25,8 @@ import { useAvisos } from '../../context/Avisos';
 import { novoId } from '../../utils/id';
 import './painel.css';
 
-const RASCUNHO = 'abrigo-rascunho-animal';
+// v2: vacinas viraram [{ tipo, ultimaDose }]; rascunhos no formato antigo são ignorados
+const RASCUNHO = 'abrigo-rascunho-animal-v2';
 
 const VAZIO = {
   nome: '',
@@ -38,27 +40,23 @@ const VAZIO = {
   ala: null,
   canil: '',
   chip: '',
-  castrado: false,
+  chipAdicional: '',
+  castrado: null,
   medicacaoContinua: false,
   medicacoes: '',
   condicoesSaude: '',
+  /** [{ tipo, ultimaDose }] — ultimaDose '' = não sabe quando */
   vacinas: [],
-  vacinasOutras: '',
   descricao: '',
   visivelNaVitrine: true,
 };
 
-/** "V8/V10, Antirrábica, Giárdia" → chips conhecidos + texto livre */
-function separarVacinas(texto) {
-  const partes = (texto || '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return {
-    vacinas: partes.filter((p) => VACINAS_COMUNS.includes(p)),
-    vacinasOutras: partes.filter((p) => !VACINAS_COMUNS.includes(p)).join(', '),
-  };
+/** Chips marcados → lista de vacinas, preservando as datas já digitadas. */
+function vacinasMarcadas(atuais, tipos) {
+  return tipos.map((tipo) => atuais.find((v) => v.tipo === tipo) ?? { tipo, ultimaDose: '' });
 }
+
+const hoje = () => new Date().toISOString().slice(0, 10);
 
 /** Estado da tela → corpo que o backend espera (AnimalRequest). */
 function paraApi(f, original) {
@@ -74,18 +72,15 @@ function paraApi(f, original) {
       : (original?.dataNascimentoEstimada ?? null),
     castrado: f.castrado,
     chip: f.chip.trim() || null,
+    chipAdicional: f.chipAdicional.trim() || null,
     canil: f.canil.trim() || null,
     ala: f.ala,
     idoso: f.idoso,
-    medicacaoContinua: f.medicacaoContinua,
     descricao: f.descricao.trim() || null,
     medicacoes: f.medicacaoContinua ? f.medicacoes.trim() || null : null,
     condicoesSaude: f.condicoesSaude.trim() || null,
-    vacinas:
-      [...f.vacinas, ...f.vacinasOutras.split(',').map((s) => s.trim())]
-        .filter(Boolean)
-        .join(', ') || null,
-    // Proposta D3: o backend ainda não guarda porte/temperamento (ignora campos desconhecidos).
+    // a lista enviada substitui a anterior no backend
+    vacinas: f.vacinas.map((v) => ({ tipo: v.tipo, ultimaDose: v.ultimaDose || null })),
     porte: f.porte,
     temperamento: f.temperamento,
     versao: original?.versao,
@@ -155,12 +150,13 @@ export default function FormularioAnimal() {
       cor: a.cor ?? '',
       canil: a.canil ?? '',
       chip: a.chip ?? '',
+      chipAdicional: a.chipAdicional ?? '',
       medicacoes: a.medicacoes ?? '',
       condicoesSaude: a.condicoesSaude ?? '',
       descricao: a.descricao ?? '',
       temperamento: a.temperamento ?? [],
       idadeAnos: idadePorData(a.dataNascimentoEstimada),
-      ...separarVacinas(a.vacinas),
+      vacinas: (a.vacinas ?? []).map((v) => ({ tipo: v.tipo, ultimaDose: v.ultimaDose ?? '' })),
     });
     setFotos(
       a.fotos.map((x) => ({ chave: x.id, fotoId: x.id, url: x.url, principal: x.principal })),
@@ -558,11 +554,6 @@ export default function FormularioAnimal() {
       >
         <div className="cartao-interno mb-3">
           <Interruptor
-            titulo={f.sexo === 'FEMEA' ? 'Castrada' : 'Castrado'}
-            marcado={f.castrado}
-            aoMudar={(v) => mudar('castrado', v)}
-          />
-          <Interruptor
             titulo="Usa medicação contínua"
             marcado={f.medicacaoContinua}
             aoMudar={(v) => mudar('medicacaoContinua', v)}
@@ -580,18 +571,41 @@ export default function FormularioAnimal() {
           />
         )}
         <GrupoChips
+          rotulo={f.sexo === 'FEMEA' ? 'Castrada?' : 'Castrado?'}
+          dica="Deixe sem marcar se ainda não sabe."
+          opcoes={CASTRADO}
+          valor={f.castrado}
+          aoMudar={(v) => mudar('castrado', v)}
+        />
+        <GrupoChips
           rotulo="Vacinas tomadas"
+          dica="Só registra o que já tomou. A data é opcional."
           multipla
-          opcoes={VACINAS_COMUNS}
-          valor={f.vacinas}
-          aoMudar={(v) => mudar('vacinas', v)}
+          opcoes={VACINAS}
+          valor={f.vacinas.map((v) => v.tipo)}
+          aoMudar={(tipos) => mudar('vacinas', vacinasMarcadas(f.vacinas, tipos))}
         />
-        <CampoTexto
-          rotulo="Outras vacinas"
-          value={f.vacinasOutras}
-          onChange={texto('vacinasOutras')}
-          placeholder="Separe por vírgula"
-        />
+        {f.vacinas.length > 0 && (
+          <div className="vacinas-datas">
+            {f.vacinas.map((v) => (
+              <CampoTexto
+                key={v.tipo}
+                rotulo={`${rotulo(VACINAS, v.tipo)}: última dose`}
+                type="date"
+                max={hoje()}
+                value={v.ultimaDose}
+                onChange={(e) =>
+                  mudar(
+                    'vacinas',
+                    f.vacinas.map((x) =>
+                      x.tipo === v.tipo ? { ...x, ultimaDose: e.target.value } : x,
+                    ),
+                  )
+                }
+              />
+            ))}
+          </div>
+        )}
         <CampoTexto
           rotulo="Condições e cuidados"
           multilinha
@@ -648,7 +662,7 @@ export default function FormularioAnimal() {
               value={f.canil}
               onChange={texto('canil')}
               maxLength={40}
-              inputMode="numeric"
+              placeholder="Ex.: 14A, Solto A"
             />
           </div>
           <div className="col-7">
@@ -662,6 +676,14 @@ export default function FormularioAnimal() {
             />
           </div>
         </div>
+        <CampoTexto
+          rotulo="Segundo chip (opcional)"
+          dica="Quando o primeiro parou de ler e outro foi aplicado."
+          value={f.chipAdicional}
+          onChange={texto('chipAdicional')}
+          maxLength={40}
+          inputMode="numeric"
+        />
         <div className="cartao-interno">
           <Interruptor
             titulo="Mostrar na vitrine"

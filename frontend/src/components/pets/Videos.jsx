@@ -5,7 +5,7 @@ import { USAR_API_REAL } from '../../api/config';
 import './videos.css';
 
 /**
- * Vídeos dos animais (ADR-005).
+ * Vídeos dos animais (ADR 0009).
  * - Na vitrine aparecem só a capa e o botão de play: nada é baixado até a pessoa tocar
  *   (no 4G, cinco vídeos tocando sozinhos gastariam dados e bateria).
  * - Vídeo do YouTube: toca pelo youtube-nocookie.com (sem cookies de rastreamento antes do play).

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { buscarAnimal } from '../../api/vitrine';
-import { PORTES, rotulo, SEXOS, textoIdade } from '../../api/rotulos';
+import { PORTES, rotulo, SEXOS, textoIdade, VACINAS } from '../../api/rotulos';
 import useCarregar from '../../hooks/useCarregar';
 import FotoAnimal from '../../components/pets/FotoAnimal';
 import Carregando from '../../components/ui/Carregando';
@@ -83,7 +83,7 @@ export default function Animal() {
 
   const ele = a.sexo === 'FEMEA' ? 'ela' : 'ele';
   const dele = a.sexo === 'FEMEA' ? 'dela' : 'dele';
-  const temSaude = a.medicacoes || a.condicoesSaude || typeof a.vacinasEmDia === 'boolean';
+  const temSaude = a.medicacoes || a.condicoesSaude || a.vacinas?.length > 0;
   const adotarEmDestaque = a.disponivelParaAdocao && !a.idoso;
 
   const compartilhar = async () => {
@@ -226,15 +226,18 @@ export default function Animal() {
                   <strong>Cuidados:</strong> {a.condicoesSaude}
                 </p>
               )}
-              {a.vacinasEmDia === true && (
-                <p className="mb-0">
-                  <span className="selo selo-verde">
-                    <i className="fa-solid fa-syringe" aria-hidden="true" /> Vacinas em dia
+              {a.vacinas?.length > 0 && (
+                <div className="mb-0">
+                  <strong>Vacinas:</strong>{' '}
+                  <span className="d-inline-flex flex-wrap gap-1 align-middle">
+                    {a.vacinas.map((v) => (
+                      <span key={v} className="selo selo-verde">
+                        <i className="fa-solid fa-syringe" aria-hidden="true" />{' '}
+                        {rotulo(VACINAS, v)}
+                      </span>
+                    ))}
                   </span>
-                </p>
-              )}
-              {a.vacinasEmDia === false && (
-                <p className="mb-0 text-secondary">Vacinas sendo atualizadas pela equipe.</p>
+                </div>
               )}
             </section>
           )}

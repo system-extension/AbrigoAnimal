@@ -16,7 +16,7 @@ export async function listarAnimais(filtros = {}) {
       // idosos primeiro: são os que mais precisam de visibilidade
       .sort((a, b) => Number(b.idoso) - Number(a.idoso))
       .map(banco.publico);
-    return banco.paginar(lista, filtros.pagina, filtros.tamanho ?? 48);
+    return banco.paginar(lista, filtros.pagina, filtros.tamanho ?? 24); // backend: padrão 24, máx. 48
   });
 }
 
@@ -27,10 +27,10 @@ export async function buscarAnimal(slug) {
 }
 
 /**
- * Vídeos dos animais (ADR-005: hospedados no YouTube da ONG; o sistema guarda só o ID).
+ * Vídeos dos animais (ADR 0009: hospedados no YouTube da ONG; o sistema guarda só o ID).
  * O backend ainda não tem esta rota: no modo API real a seção simplesmente não aparece.
  */
 export async function listarVideos({ tamanho = 12 } = {}) {
-  if (REAL) return { itens: [] }; // TODO ADR-005: requisicao('/api/public/videos' + query({ tamanho }))
+  if (REAL) return { itens: [] }; // TODO ADR 0009: requisicao('/api/public/videos' + query({ tamanho }))
   return banco.responder(() => ({ itens: banco.videosPublicos().slice(0, tamanho) }));
 }
