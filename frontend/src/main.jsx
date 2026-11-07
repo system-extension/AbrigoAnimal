@@ -1,11 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 // Fontes e ícones empacotados junto com o site: sem depender de CDN externo.
-import '@fontsource/poppins/400.css';
-import '@fontsource/poppins/500.css';
-import '@fontsource/poppins/600.css';
-import '@fontsource/poppins/700.css';
-import '@fontsource/poppins/800.css';
+// Fontes do guia (docs/DESIGN.md): Plus Jakarta Sans na interface, Lora nos títulos públicos.
+import '@fontsource-variable/plus-jakarta-sans';
+import '@fontsource-variable/lora';
+import '@fontsource-variable/lora/wght-italic.css';
 import '@fortawesome/fontawesome-free/css/fontawesome.min.css';
 import '@fortawesome/fontawesome-free/css/solid.min.css';
 import '@fortawesome/fontawesome-free/css/regular.min.css';

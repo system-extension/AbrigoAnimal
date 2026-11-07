@@ -15,8 +15,8 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(10px);
+  background: rgba(250, 250, 248, 0.92);
+  backdrop-filter: saturate(1.4) blur(12px);
   border-bottom: 1px solid var(--linha);
   padding-top: env(safe-area-inset-top);
 }
@@ -39,15 +39,23 @@
 }
 .marca-texto strong {
   color: var(--tinta);
-  font-weight: 800;
+  font-weight: 700;
   font-size: 1.05rem;
 }
 .marca-texto small {
-  color: var(--verde);
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  font-size: 0.68rem;
+  color: var(--texto-suave);
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+.cabecalho-acoes-movel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.atalho-apadrinhar {
+  min-height: 44px;
+  padding-inline: 1rem;
+  font-size: 0.9375rem;
 }
 .menu-desktop {
   display: none;
@@ -61,17 +69,20 @@
   font-weight: 600;
   text-decoration: none;
 }
-.menu-link:hover,
+.menu-link:hover {
+  background: var(--neutro-suave);
+}
 .menu-link.active {
-  color: var(--laranja);
-  background: var(--laranja-suave);
+  color: var(--tinta);
+  background: var(--neutro-suave);
+  box-shadow: inset 0 -2px 0 var(--laranja);
 }
 @media (min-width: 992px) {
   .menu-desktop {
     display: flex;
   }
-  .menu-botao {
-    display: none !important;
+  .cabecalho-acoes-movel {
+    display: none;
   }
 }
 .menu-movel {
@@ -101,12 +112,12 @@
 
 .rodape {
   margin-top: 3rem;
-  background: #2a2420;
-  color: #d9d1c9;
+  background: var(--tinta);
+  color: #d6d3cf;
   padding: 3rem 0 calc(1.5rem + env(safe-area-inset-bottom));
 }
 .rodape a {
-  color: #f3e9df;
+  color: #f5f4f2;
   text-decoration: none;
 }
 .rodape a:hover {
@@ -140,4 +151,9 @@
   padding-top: 1.25rem;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   font-size: 0.9rem;
+}
+@media (max-width: 359.98px) {
+  .marca-texto {
+    display: none;
+  }
 }

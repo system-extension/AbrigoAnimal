@@ -1,6 +1,6 @@
 .painel {
   min-height: 100dvh;
-  background: #f7f3ee;
+  background: var(--fundo);
   padding-bottom: calc(84px + env(safe-area-inset-bottom));
 }
 .painel-topo {
@@ -59,7 +59,7 @@
   padding: 0.3rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom));
   background: #fff;
   border-top: 1px solid var(--linha);
-  box-shadow: 0 -4px 18px rgba(60, 44, 30, 0.06);
+  box-shadow: 0 -4px 18px rgba(28, 27, 26, 0.06);
 }
 .painel-aba {
   display: grid;
@@ -85,10 +85,10 @@
   height: 52px;
   margin-top: -22px;
   border-radius: 50%;
-  background: var(--laranja);
-  color: #fff;
+  background: var(--acao);
+  color: var(--acao-texto);
   font-size: 1.35rem;
-  box-shadow: 0 6px 16px rgba(181, 83, 15, 0.35);
+  box-shadow: 0 6px 16px rgba(243, 149, 52, 0.4);
 }
 .painel-aba-destaque.active {
   color: var(--laranja);
@@ -186,7 +186,7 @@
 }
 .numero strong {
   font-size: 1.8rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--tinta);
   line-height: 1.1;
 }
@@ -330,7 +330,7 @@
   top: calc(60px + env(safe-area-inset-top));
   z-index: 20;
   padding: 0.6rem 1rem;
-  background: #f7f3ee;
+  background: var(--fundo);
   gap: 0.4rem;
 }
 .form-atalhos .chip {
@@ -372,7 +372,7 @@
   font-weight: 600;
 }
 .aviso-obito {
-  background: #efedea;
+  background: var(--neutro-suave);
   justify-content: flex-start;
 }
 .sugestao {
@@ -404,7 +404,7 @@
   padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.97);
   border-top: 1px solid var(--linha);
-  box-shadow: 0 -6px 18px rgba(60, 44, 30, 0.08);
+  box-shadow: 0 -6px 18px rgba(28, 27, 26, 0.08);
 }
 @media (min-width: 992px) {
   .barra-salvar {
@@ -483,7 +483,7 @@
   border-radius: 999px;
   background: var(--laranja);
   color: #fff;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 .foto-acao {
@@ -495,7 +495,7 @@
   height: 38px;
   border: 0;
   border-radius: 50%;
-  background: rgba(31, 26, 23, 0.6);
+  background: rgba(28, 27, 26, 0.6);
   color: #fff;
 }
 .foto-acao-remover {

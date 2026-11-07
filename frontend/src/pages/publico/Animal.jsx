@@ -83,7 +83,8 @@ export default function Animal() {
 
   const ele = a.sexo === 'FEMEA' ? 'ela' : 'ele';
   const dele = a.sexo === 'FEMEA' ? 'dela' : 'dele';
-  const temSaude = a.medicacoes || a.condicoesSaude || a.vacinas;
+  const temSaude = a.medicacoes || a.condicoesSaude || typeof a.vacinasEmDia === 'boolean';
+  const adotarEmDestaque = a.disponivelParaAdocao && !a.idoso;
 
   const compartilhar = async () => {
     const dadosLink = { title: `${a.nome} | Abrigo Animal Joinville`, url: window.location.href };
@@ -121,7 +122,7 @@ export default function Animal() {
         <div className="pagina-animal-texto">
           <div className="d-flex flex-wrap gap-2 mb-2">
             {a.idoso && (
-              <span className="selo selo-laranja">
+              <span className="selo selo-verde">
                 <i className="fa-solid fa-heart" aria-hidden="true" /> Idos
                 {a.sexo === 'FEMEA' ? 'a' : 'o'}
               </span>
@@ -145,11 +146,14 @@ export default function Animal() {
             />
             <Info icone="fa-cake-candles" rotulo="Idade" valor={textoIdade(a.idadeAnos)} />
             {a.porte && <Info icone="fa-ruler" rotulo="Porte" valor={rotulo(PORTES, a.porte)} />}
-            <Info
-              icone="fa-scissors"
-              rotulo={a.sexo === 'FEMEA' ? 'Castrada' : 'Castrado'}
-              valor={a.castrado ? 'Sim' : 'Ainda não'}
-            />
+            {/* null = a ONG ainda não informou: melhor não dizer nada que dizer "não" */}
+            {typeof a.castrado === 'boolean' && (
+              <Info
+                icone="fa-scissors"
+                rotulo={a.sexo === 'FEMEA' ? 'Castrada' : 'Castrado'}
+                valor={a.castrado ? 'Sim' : 'Ainda não'}
+              />
+            )}
             {a.cor && <Info icone="fa-palette" rotulo="Cor" valor={a.cor} />}
           </div>
 
@@ -222,25 +226,31 @@ export default function Animal() {
                   <strong>Cuidados:</strong> {a.condicoesSaude}
                 </p>
               )}
-              {a.vacinas && (
+              {a.vacinasEmDia === true && (
                 <p className="mb-0">
-                  <strong>Vacinas:</strong> {a.vacinas}
+                  <span className="selo selo-verde">
+                    <i className="fa-solid fa-syringe" aria-hidden="true" /> Vacinas em dia
+                  </span>
                 </p>
+              )}
+              {a.vacinasEmDia === false && (
+                <p className="mb-0 text-secondary">Vacinas sendo atualizadas pela equipe.</p>
               )}
             </section>
           )}
 
+          {/* Uma ação principal só (docs/DESIGN.md): idoso → apadrinhar; demais → adotar. */}
           <div className="acoes-animal">
             <Link
               to={`/animais/${a.slug}/interesse?tipo=APADRINHAR`}
-              className="botao botao-principal botao-grande"
+              className={`botao botao-grande ${adotarEmDestaque ? 'botao-contorno' : 'botao-principal'}`}
             >
               <i className="fa-solid fa-heart" aria-hidden="true" /> Apadrinhar
             </Link>
             {a.disponivelParaAdocao && (
               <Link
                 to={`/animais/${a.slug}/interesse?tipo=ADOTAR`}
-                className="botao botao-verde botao-grande"
+                className={`botao botao-grande ${adotarEmDestaque ? 'botao-principal' : 'botao-contorno'}`}
               >
                 <i className="fa-solid fa-house" aria-hidden="true" /> Adotar
               </Link>

@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { listarAnimais } from '../../api/vitrine';
 import useCarregar from '../../hooks/useCarregar';
 import CartaoAnimal, { CartaoAnimalEsqueleto } from '../../components/pets/CartaoAnimal';
@@ -48,12 +48,12 @@ export default function Animais() {
     <div className="container secao pt-4">
       <span className="sobretitulo">Adoção e apadrinhamento</span>
       <h1 className="titulo-secao">
-        {filtros.idoso ? 'Idosos esperando por você' : 'Nossos animais'}
+        {filtros.idoso ? 'Amor com tempo de sobra.' : 'Encontre uma nova conexão.'}
       </h1>
       <p className="texto-suave">
         {filtros.idoso
-          ? 'Eles estão há mais tempo no abrigo. Adotar ou apadrinhar um idoso muda a rotina dele.'
-          : 'Toque em um animal para conhecer a história dele e saber como ajudar.'}
+          ? 'Eles estão há mais tempo no abrigo. Um passeio tranquilo, um cuidado especial e alguém por perto transformam o dia deles.'
+          : 'Cada animal tem uma história. Toque para conhecer o jeito, os cuidados e como fazer parte da vida dele.'}
       </p>
 
       <div className="chips chips-rolagem filtros-fixos" role="group" aria-label="Filtrar animais">
@@ -101,6 +101,15 @@ export default function Animais() {
             <CartaoAnimal key={a.slug} animal={a} />
           ))}
         </div>
+      )}
+      {!filtros.idoso && (
+        <aside className="nota-apadrinhar">
+          <i className="fa-regular fa-heart" aria-hidden="true" />
+          <p>
+            Não pode adotar agora? Apadrinhe um idoso e acompanhe de perto.{' '}
+            <Link to="/animais?idoso=true">Conhecer os idosos</Link>
+          </p>
+        </aside>
       )}
     </div>
   );

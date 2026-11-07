@@ -71,16 +71,7 @@ Rotas antigas do protótipo (`/home`, `/catalogo`, `/pets/:id`, `/termos`, `/adm
 
 ## Identidade visual
 
-Cores tiradas do logo (`styles/tema.css`):
-
-| Token            | Cor       | Uso                                          |
-| ---------------- | --------- | -------------------------------------------- |
-| `--laranja`      | `#b5530f` | Botões de ação (contraste 5:1 com branco)    |
-| `--laranja-logo` | `#f39534` | Detalhes decorativos, nunca com texto branco |
-| `--verde`        | `#3e6b3a` | Selos, "disponível", interruptores           |
-| `--verde-logo`   | `#b3d39e` | Fundos suaves                                |
-
-Fonte Poppins e ícones Font Awesome vêm **empacotados** (sem CDN): funcionam mesmo com rede instável.
+O padrão visual (cores e seus papéis, tipografia, componentes e regras de uso) está em **[DESIGN.md](./DESIGN.md)**. Os valores ficam em `src/styles/tema.css`.
 
 ## Ligando ao backend
 

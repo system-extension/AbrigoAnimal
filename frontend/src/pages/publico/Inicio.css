@@ -1,0 +1,299 @@
+/* Página inicial: estilo editorial (títulos em Lora, muito respiro, foto como protagonista).
+   Regras gerais em docs/DESIGN.md. */
+
+/* ------------------------------- Capa -------------------------------- */
+.capa {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+  padding-block: 2rem 3rem;
+}
+.capa .hero-titulo {
+  font-size: clamp(2.5rem, 10vw, 5rem);
+  line-height: 1.04;
+  margin: 1rem 0 1.25rem;
+  max-width: 13ch;
+}
+.capa-texto > p:not(.capa-nota) {
+  max-width: 33rem;
+  color: var(--texto-suave);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+.ponto-verde {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--verde-logo);
+  box-shadow: 0 0 0 5px rgba(179, 211, 158, 0.3);
+}
+.capa-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.75rem;
+  margin-top: 1.75rem;
+}
+.capa-nota {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1.5rem 0 0;
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+}
+.capa-nota i {
+  color: var(--verde);
+}
+
+/* Retrato em arco com moldura sálvia (cor do logo, só decorativa). */
+.capa-retrato {
+  position: relative;
+  justify-self: center;
+  width: min(100%, 460px);
+  margin: 0 0 1.75rem;
+  padding: 0.5rem;
+  border-radius: 999px 999px 24px 24px;
+  background: var(--verde-logo);
+  box-shadow: var(--sombra-forte);
+}
+.capa-retrato > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.bilhete {
+  position: absolute;
+  right: auto;
+  left: -0.25rem;
+  font-size: 1rem;
+  bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 16px;
+  background: var(--superficie);
+  color: var(--tinta);
+  box-shadow: var(--sombra-forte);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.bilhete > i {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--verde-suave);
+  color: var(--verde);
+}
+.bilhete small {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--texto-suave);
+}
+.capa-legenda {
+  position: absolute;
+  right: 0.5rem;
+  bottom: -1.6rem;
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+}
+
+/* ------------------------- Seções editoriais ------------------------- */
+.secao-editorial {
+  padding-block: 3rem;
+}
+.secao-editorial p {
+  color: var(--texto-suave);
+  line-height: 1.7;
+}
+.link-editorial {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  color: var(--laranja);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+.link-editorial:hover {
+  color: var(--laranja-escuro);
+}
+
+/* Apadrinhamento: texto à esquerda, passos numerados à direita. */
+.inicio-vinculo {
+  display: grid;
+  gap: 2rem;
+}
+.inicio-vinculo .botao {
+  margin-top: 0.5rem;
+}
+.lista-vinculo {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lista-vinculo li {
+  display: flex;
+  gap: 1.25rem;
+  padding-block: 1.4rem;
+  border-bottom: 1px solid var(--linha);
+}
+.lista-vinculo li:first-child {
+  padding-top: 0;
+}
+.lista-vinculo li > span {
+  font-family: var(--fonte-titulo);
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--verde);
+}
+.lista-vinculo h3 {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+.lista-vinculo p {
+  margin: 0.35rem 0 0;
+}
+
+/* Convite: a única faixa colorida da página. */
+.convite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: clamp(2.5rem, 7vw, 4.5rem) 1.25rem;
+  border-radius: 28px;
+  background: var(--verde-suave);
+  text-align: center;
+}
+.convite .titulo-secao {
+  font-size: clamp(2.1rem, 7vw, 3.75rem);
+  max-width: 16ch;
+  margin-bottom: 0.5rem;
+}
+
+/* Mural em polaroids: leve inclinação dá personalidade sem pesar. */
+.mural-polaroid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  padding-block: 0.5rem;
+}
+.mural-polaroid a {
+  display: block;
+  padding: 0.4rem 0.4rem 1.1rem;
+  border-radius: 12px;
+  background: var(--superficie);
+  box-shadow: var(--sombra);
+  transform: rotate(-1.5deg);
+  transition: transform 0.2s;
+}
+.mural-polaroid a:nth-child(even) {
+  transform: rotate(1.5deg);
+}
+.mural-polaroid a:hover {
+  transform: rotate(0) translateY(-3px);
+}
+.mural-polaroid img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Rolê do Abrigo */
+.role-editorial {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+}
+.role-foto {
+  position: relative;
+  margin: 0;
+}
+.role-foto img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 24px;
+}
+
+.role-data {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 1rem;
+  padding: 0.8rem;
+  border-radius: var(--raio);
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+}
+.role-dia {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  background: var(--verde);
+  color: #fff;
+  line-height: 1;
+}
+.role-dia small {
+  text-transform: uppercase;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+.role-dia strong {
+  font-size: 1.5rem;
+}
+
+.estado-conteudo {
+  padding: 2rem;
+  border: 1px dashed var(--linha);
+  border-radius: var(--raio-lg);
+}
+
+@media (min-width: 768px) {
+  .capa {
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 3rem;
+    padding-block: 4rem;
+  }
+  .secao-editorial {
+    padding-block: 4.5rem;
+  }
+  .inicio-vinculo,
+  .role-editorial {
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+  .role-editorial {
+    align-items: center;
+  }
+  .mural-polaroid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+@media (max-width: 767.98px) {
+  .capa-acoes .botao {
+    width: 100%;
+  }
+  .capa-retrato {
+    width: min(100% - 1rem, 380px);
+  }
+}

@@ -50,7 +50,7 @@
   place-content: center;
   justify-items: center;
   gap: 0.4rem;
-  background: linear-gradient(160deg, var(--verde-suave), #fff6ec);
+  background: linear-gradient(160deg, var(--verde-suave), var(--laranja-suave));
   color: var(--verde);
   font-weight: 600;
   font-size: 0.85rem;

@@ -36,15 +36,20 @@ export default function Cabecalho() {
           </Link>
         </nav>
 
-        <button
-          type="button"
-          className="botao botao-contorno botao-icone menu-botao"
-          onClick={() => setMenu(true)}
-          aria-label="Abrir menu"
-          aria-expanded={menu}
-        >
-          <i className="fa-solid fa-bars" aria-hidden="true" />
-        </button>
+        <div className="cabecalho-acoes-movel">
+          <Link to="/animais?idoso=true" className="botao botao-principal atalho-apadrinhar">
+            Apadrinhar
+          </Link>
+          <button
+            type="button"
+            className="botao botao-contorno botao-icone menu-botao"
+            onClick={() => setMenu(true)}
+            aria-label="Abrir menu"
+            aria-expanded={menu}
+          >
+            <i className="fa-solid fa-bars" aria-hidden="true" />
+          </button>
+        </div>
       </div>
 
       <Folha aberta={menu} aoFechar={() => setMenu(false)} titulo="Menu">

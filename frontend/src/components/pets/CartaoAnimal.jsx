@@ -16,7 +16,7 @@ export default function CartaoAnimal({ animal }) {
         <div className="cartao-animal-foto">
           <FotoAnimal src={animal.fotoPrincipal} nome={animal.nome} especie={animal.especie} />
           {animal.idoso && (
-            <span className="selo selo-laranja cartao-animal-selo">
+            <span className="selo selo-verde cartao-animal-selo">
               <i className="fa-solid fa-heart" aria-hidden="true" /> Idos{artigo}
             </span>
           )}
