@@ -3,13 +3,18 @@ import FotoAnimal from './FotoAnimal';
 import { rotulo, SEXOS, textoIdade } from '../../api/rotulos';
 import './pets.css';
 
-/** Cartão da vitrine. Recebe o formato público do backend (AnimalPublicoResponse). */
-export default function CartaoAnimal({ animal }) {
+/**
+ * Cartão da vitrine. Recebe o formato público do backend (AnimalPublicoResponse).
+ * `veioDaLista`: marca a navegação para a ficha saber que pode "voltar" para a lista
+ * (e assim a lista reabre com as mesmas páginas e na mesma posição).
+ */
+export default function CartaoAnimal({ animal, veioDaLista = false }) {
   const artigo = animal.sexo === 'FEMEA' ? 'a' : 'o';
   return (
     <article className="cartao-animal">
       <Link
         to={`/animais/${animal.slug}`}
+        state={veioDaLista ? { veioDaLista: true } : undefined}
         className="cartao-animal-link"
         aria-label={`Conhecer ${animal.nome}`}
       >

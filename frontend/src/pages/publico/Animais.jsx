@@ -120,7 +120,7 @@ export default function Animais() {
       ) : (
         <div className="grade-animais">
           {dados.itens.map((a) => (
-            <CartaoAnimal key={a.slug} animal={a} />
+            <CartaoAnimal key={a.slug} animal={a} veioDaLista />
           ))}
         </div>
       )}

@@ -17,10 +17,13 @@ export default function useRolagemRestaurada(chave, pronto) {
   const voltando = useNavigationType() === 'POP';
   const feito = useRef(!voltando);
 
-  // Grava a posição no CLIQUE (fase de captura, antes da navegação): é o único momento em que a
-  // rolagem com certeza ainda é a da lista. Gravar ao desmontar não serve: aí o React já trocou
-  // a lista pela próxima página (mais curta) e o navegador "encolheu" a rolagem; e, em
-  // desenvolvimento, o StrictMode desmonta e remonta a tela, regravando a posição com 0.
+  // Grava a posição em dois momentos em que a tela ainda é a da lista:
+  //  - no CLIQUE (fase de captura, antes da navegação): ao abrir a ficha de um animal;
+  //  - no "pagehide": o navegador avisa que a página vai ser descarregada (F5, fechar a aba).
+  //    Sem ele, o F5 restauraria a posição do último clique (ex.: o "Carregar mais"), não a atual.
+  // Gravar ao desmontar não serve: aí o React já trocou a lista pela próxima página (mais curta)
+  // e o navegador "encolheu" a rolagem; e, em desenvolvimento, o StrictMode desmonta e remonta a
+  // tela, regravando a posição com 0.
   useEffect(() => {
     const gravar = () => {
       try {
@@ -30,7 +33,11 @@ export default function useRolagemRestaurada(chave, pronto) {
       }
     };
     document.addEventListener('click', gravar, true);
-    return () => document.removeEventListener('click', gravar, true);
+    window.addEventListener('pagehide', gravar);
+    return () => {
+      document.removeEventListener('click', gravar, true);
+      window.removeEventListener('pagehide', gravar);
+    };
   }, [chave]);
 
   useEffect(() => {

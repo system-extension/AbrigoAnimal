@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { buscarAnimal } from '../../api/vitrine';
 import { PORTES, rotulo, SEXOS, textoIdade, VACINAS } from '../../api/rotulos';
 import useCarregar from '../../hooks/useCarregar';
@@ -61,6 +61,18 @@ export default function Animal() {
   const { slug } = useParams();
   const avisar = useAvisos();
   const { dados: a, carregando, erro } = useCarregar(() => buscarAnimal(slug), [slug]);
+  const location = useLocation();
+  const navegar = useNavigate();
+
+  // Veio da lista? "Todos os animais" volta no histórico (como o botão voltar do celular):
+  // a lista reabre com as páginas já carregadas e na mesma posição. Veio de um link
+  // compartilhado? Segue o link normal para /animais (voltar levaria para fora do site).
+  const voltarParaLista = (e) => {
+    if (location.state?.veioDaLista) {
+      e.preventDefault();
+      navegar(-1);
+    }
+  };
 
   if (carregando) return <Carregando />;
   if (erro)
@@ -104,7 +116,7 @@ export default function Animal() {
       <div className="container pagina-animal-grade">
         <div>
           <div className="d-flex justify-content-between align-items-center py-3">
-            <Link to="/animais" className="botao botao-texto ps-0">
+            <Link to="/animais" className="botao botao-texto ps-0" onClick={voltarParaLista}>
               <i className="fa-solid fa-arrow-left" aria-hidden="true" /> Todos os animais
             </Link>
             <button
