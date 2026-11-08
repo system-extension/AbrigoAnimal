@@ -1,5 +1,6 @@
 package br.org.abrigo.solicitacoes.internal.web;
 
+import br.org.abrigo.plataforma.IpDoCliente;
 import br.org.abrigo.solicitacoes.TipoSolicitacao;
 import br.org.abrigo.solicitacoes.internal.GestaoSolicitacoes;
 import br.org.abrigo.solicitacoes.internal.GestaoSolicitacoes.FormularioInteresse;
@@ -26,9 +27,11 @@ import java.util.UUID;
 class SolicitacaoPublicaController {
 
     private final GestaoSolicitacoes gestao;
+    private final IpDoCliente ipDoCliente;
 
-    SolicitacaoPublicaController(GestaoSolicitacoes gestao) {
+    SolicitacaoPublicaController(GestaoSolicitacoes gestao, IpDoCliente ipDoCliente) {
         this.gestao = gestao;
+        this.ipDoCliente = ipDoCliente;
     }
 
     @PostMapping("/api/public/solicitacoes")
@@ -36,7 +39,7 @@ class SolicitacaoPublicaController {
     Protocolo enviar(@Valid @RequestBody FormularioRequest req, HttpServletRequest http) {
         var form = new FormularioInteresse(req.tipo(), req.animalSlug(), req.nome(), req.telefone(),
                 req.email(), req.mensagem(), Boolean.TRUE.equals(req.consentimento()));
-        return new Protocolo(gestao.receber(form, http.getRemoteAddr(), req.site()));
+        return new Protocolo(gestao.receber(form, ipDoCliente.de(http), req.site()));
     }
 
     record FormularioRequest(

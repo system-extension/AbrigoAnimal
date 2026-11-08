@@ -3,7 +3,6 @@ package br.org.abrigo.integracao;
 import br.org.abrigo.suporte.IntegracaoTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -14,13 +13,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** Formulário "quero apadrinhar / quero adotar" (sem login). */
 class SolicitacaoPublicaIntegrationTest extends IntegracaoTest {
 
-    /** Cada teste usa um IP diferente para o limitador de envios não interferir entre testes. */
-    private static RequestPostProcessor ip(String ip) {
-        return req -> {
-            req.setRemoteAddr(ip);
-            return req;
-        };
-    }
+    // Cada teste usa um IP diferente (ip(...) vem de IntegracaoTest) para o limitador de envios
+    // não interferir entre testes.
 
     private String formulario(String slug, boolean consentimento, String isca) {
         return formulario(slug, consentimento, isca, "Visitante");
@@ -65,6 +59,22 @@ class SolicitacaoPublicaIntegrationTest extends IntegracaoTest {
                     .andExpect(status().isCreated());
         }
         mvc.perform(post("/api/public/solicitacoes").with(ip("10.0.0.3"))
+                        .contentType(MediaType.APPLICATION_JSON).content(corpo))
+                .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    void trocarOXForwardedForNaoBurlaOLimite() throws Exception {
+        String corpo = formulario("", true, "");
+        for (int i = 0; i < 3; i++) {
+            mvc.perform(post("/api/public/solicitacoes").with(ip("10.0.0.5"))
+                            .header("X-Forwarded-For", "198.51.100." + i)
+                            .contentType(MediaType.APPLICATION_JSON).content(corpo))
+                    .andExpect(status().isCreated());
+        }
+        // mesmo inventando outro "IP" no cabeçalho, a conexão é a mesma: barrado
+        mvc.perform(post("/api/public/solicitacoes").with(ip("10.0.0.5"))
+                        .header("X-Forwarded-For", "198.51.100.99")
                         .contentType(MediaType.APPLICATION_JSON).content(corpo))
                 .andExpect(status().isTooManyRequests());
     }

@@ -50,6 +50,12 @@ class UsuariosController {
         return gestao.reativar(id);
     }
 
+    /** Libera quem foi barrado por senhas erradas (ADR 0013). Não vale para o administrador. */
+    @PostMapping("/{id}/desbloquear")
+    UsuarioResposta desbloquear(@PathVariable UUID id) {
+        return gestao.desbloquear(id);
+    }
+
     /** Senha provisória para quem esqueceu a sua (ver GestaoUsuarios.redefinirSenha). */
     @PostMapping("/{id}/senha")
     UsuarioResposta redefinirSenha(@PathVariable UUID id, @Valid @RequestBody NovaSenhaRequest req,

@@ -47,7 +47,7 @@ class SegurancaIntegrationTest extends IntegracaoTest {
 
     @Test
     void senhaErradaDa401() throws Exception {
-        mvc.perform(post("/api/auth/login").with(csrf())
+        mvc.perform(post("/api/auth/login").with(csrf()).with(ip(ipNovo()))
                         .param("username", "admin@teste.org").param("password", "errada"))
                 .andExpect(status().isUnauthorized());
     }

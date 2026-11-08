@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -22,32 +23,35 @@ public class GestaoUsuarios {
 
     private final UsuarioRepository usuarios;
     private final PasswordEncoder encoder;
+    private final ProtecaoLogin protecao;
 
-    GestaoUsuarios(UsuarioRepository usuarios, PasswordEncoder encoder) {
+    GestaoUsuarios(UsuarioRepository usuarios, PasswordEncoder encoder, ProtecaoLogin protecao) {
         this.usuarios = usuarios;
         this.encoder = encoder;
+        this.protecao = protecao;
     }
 
     /** Usuário comum, adicionado pelo administrador na tela Equipe. */
     public UsuarioResposta criar(String nome, String email, String senha) {
-        return UsuarioResposta.de(usuarios.save(Usuario.criar(nome, emailLivre(email), hashValido(senha))));
+        return resposta(usuarios.save(Usuario.criar(nome, emailLivre(email), hashValido(senha))));
     }
 
     /** Só para o primeiro acesso (AdminInicial): o banco ainda não tem ninguém. */
     UsuarioResposta criarAdministrador(String nome, String email, String senha) {
-        return UsuarioResposta.de(
-                usuarios.save(Usuario.criarAdministrador(nome, emailLivre(email), hashValido(senha))));
+        return resposta(usuarios.save(Usuario.criarAdministrador(nome, emailLivre(email), hashValido(senha))));
     }
 
     @Transactional(readOnly = true)
     public List<UsuarioResposta> listar() {
-        return usuarios.findAllByOrderByNomeAsc().stream().map(UsuarioResposta::de).toList();
+        List<Usuario> todos = usuarios.findAllByOrderByNomeAsc();
+        Set<String> bloqueados = protecao.comBloqueio(todos.stream().map(Usuario::getEmail).toList());
+        return todos.stream().map(u -> UsuarioResposta.de(u, bloqueados.contains(u.getEmail()))).toList();
     }
 
     @Transactional(readOnly = true)
     public UsuarioResposta buscarPorEmail(String email) {
         return usuarios.findByEmailIgnoreCase(email)
-                .map(UsuarioResposta::de)
+                .map(this::resposta)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado"));
     }
 
@@ -57,13 +61,13 @@ public class GestaoUsuarios {
             throw new RegraNegocioException("Você não pode desativar o seu próprio usuário.");
         }
         u.desativar();
-        return UsuarioResposta.de(u);
+        return resposta(u);
     }
 
     public UsuarioResposta reativar(UUID id) {
         Usuario u = carregar(id);
         u.reativar();
-        return UsuarioResposta.de(u);
+        return resposta(u);
     }
 
     /** A própria pessoa troca a senha: precisa confirmar a atual (quem achou o celular aberto não consegue). */
@@ -92,11 +96,28 @@ public class GestaoUsuarios {
         }
         validarSenha(novaSenha);
         u.alterarSenha(encoder.encode(novaSenha));
-        return UsuarioResposta.de(u);
+        return resposta(u);
+    }
+
+    /**
+     * Libera um colega bloqueado por senhas erradas (ADR 0013). A conta do administrador não sai
+     * por aqui: é liberada pelo responsável técnico, direto no banco.
+     */
+    public UsuarioResposta desbloquear(UUID id) {
+        Usuario u = carregar(id);
+        if (u.isAdministrador()) {
+            throw new RegraNegocioException("O acesso do administrador só é liberado pelo responsável técnico do sistema.");
+        }
+        protecao.desbloquear(u.getEmail());
+        return resposta(u);
     }
 
     public boolean existeAlgumUsuario() {
         return usuarios.count() > 0;
+    }
+
+    private UsuarioResposta resposta(Usuario u) {
+        return UsuarioResposta.de(u, !protecao.comBloqueio(List.of(u.getEmail())).isEmpty());
     }
 
     private String emailLivre(String email) {
@@ -125,9 +146,12 @@ public class GestaoUsuarios {
         }
     }
 
-    public record UsuarioResposta(UUID id, String nome, String email, boolean ativo, boolean administrador) {
-        static UsuarioResposta de(Usuario u) {
-            return new UsuarioResposta(u.getId(), u.getNome(), u.getEmail(), u.isAtivo(), u.isAdministrador());
+    /** bloqueado: barrado no login por senhas erradas em algum IP (ADR 0013). */
+    public record UsuarioResposta(UUID id, String nome, String email, boolean ativo, boolean administrador,
+                                  boolean bloqueado) {
+        static UsuarioResposta de(Usuario u, boolean bloqueado) {
+            return new UsuarioResposta(u.getId(), u.getNome(), u.getEmail(), u.isAtivo(), u.isAdministrador(),
+                    bloqueado);
         }
     }
 }

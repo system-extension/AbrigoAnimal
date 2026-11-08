@@ -127,7 +127,11 @@ class UsuariosIntegrationTest extends IntegracaoTest {
                 .content("{\"senhaAtual\": \"%s\", \"novaSenha\": \"%s\"}".formatted(atual, nova)));
     }
 
+    /** IP próprio de cada teste: as senhas erradas daqui não contam para os outros testes. */
+    private final String meuIp = ipNovo();
+
     private ResultActions entrar(String email, String senha) throws Exception {
-        return mvc.perform(post("/api/auth/login").with(csrf()).param("username", email).param("password", senha));
+        return mvc.perform(post("/api/auth/login").with(csrf()).with(ip(meuIp))
+                .param("username", email).param("password", senha));
     }
 }
