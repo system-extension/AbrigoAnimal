@@ -161,6 +161,8 @@ erDiagram
 | CSRF | cookie `XSRF-TOKEN` → header `X-XSRF-TOKEN` em todo POST/PUT/DELETE (o `cliente.js` do front faz isso sozinho) |
 | Senha | BCrypt com prefixo de algoritmo (`{bcrypt}...`); de 8 caracteres a 72 bytes (limite do BCrypt) |
 | Perfis | administrador (gerencia a equipe: `/api/usuarios/**` com `hasRole("ADMIN")`) e equipe ([ADR 0012](adr/0012-perfil-administrador.md)) |
+| Força bruta no login | bloqueio permanente no banco: e-mail+IP após 5 erros seguidos, IP inteiro após errar 3 e-mails em 1h; conta recusa por 15 min após 10 erros de qualquer IP; resposta e tempo iguais aos de senha errada (piso de 400 ms em toda recusa) ([ADR 0013](adr/0013-bloqueio-de-login.md)) |
+| IP do visitante | `IpDoCliente`, modo em `IP_CLIENTE_MODO`; o `X-Forwarded-For` não é aceito cegamente (`forward-headers-strategy: none`) |
 | Dados públicos | **barreira dupla**: `AnimalVitrine` (módulo animais) e `AnimalPublicoResponse` (vitrine) só têm campos públicos; o teste `ApiPublicaSemDadosSensiveisTest` falha se chip, ala, canil, CPF, telefone, e-mail ou endereço aparecerem numa rota pública |
 | Formulário público | consentimento obrigatório, campo isca contra robôs, limite de envios por IP/hora |
 | Upload | tipo de imagem conferido pelos bytes (não pelo que o navegador diz); máximo 3 MB; o celular já comprime |
@@ -228,7 +230,6 @@ subiu. Logs em saída padrão.
 | Domínio | o `abrigoanimal.org.br` não é da ONG: registrar um novo em nome da ONG |
 | Backup automatizado | a implementar junto com a hospedagem |
 | Estágio do front no `Dockerfile` | descomentar (o build não precisa de variável) |
-| Limite de tentativas de login | a implementar |
 
 ## 8. Como rodar localmente
 

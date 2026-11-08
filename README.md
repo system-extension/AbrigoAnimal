@@ -14,6 +14,7 @@ um único deploy que serve a API e o frontend React.
 | [docs/regras-de-negocio.md](docs/regras-de-negocio.md) | Cada regra implementada e onde ela está no código |
 | [docs/adr/](docs/adr/README.md) | Decisões do projeto (escopo e técnicas), uma por arquivo |
 | [docs/api.md](docs/api.md) | Contrato HTTP |
+| [docs/producao.md](docs/producao.md) | Procedimentos em produção: acesso ao banco, desbloqueios, senha do administrador |
 | [frontend/docs/](frontend/docs/GUIA_FRONTEND.md) | Guia do front e guia de design |
 
 Entrevistas, requisitos combinados com a ONG, pendências e cronograma ficam no Notion da equipe.

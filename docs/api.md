@@ -5,7 +5,7 @@ Base: `/api`. Erros no formato Problem Details: `{ title, status, detail, campos
 ## Autenticação (sessão com cookie)
 
 1. `GET /api/auth/csrf` → gera o cookie `XSRF-TOKEN`.
-2. `POST /api/auth/login` (form-urlencoded: `username`, `password`) com header `X-XSRF-TOKEN` = valor do cookie → `204`.
+2. `POST /api/auth/login` (form-urlencoded: `username`, `password`) com header `X-XSRF-TOKEN` = valor do cookie → `204`. Qualquer falha responde `401` sem corpo, **inclusive quando o acesso está bloqueado** por senhas erradas (ADR 0013): não há resposta diferente para "bloqueado".
 3. Todo `POST/PUT/DELETE` interno envia o header `X-XSRF-TOKEN`.
 4. `GET /api/auth/me` → usuário logado `{id, nome, email, ativo, administrador}` (`401` se não houver sessão).
 5. `POST /api/auth/logout` → `204`.
@@ -36,6 +36,7 @@ Base: `/api`. Erros no formato Problem Details: `{ title, status, detail, campos
 | POST | `/api/usuarios` | `{nome, email, senha}` (senha de 8 a 72 caracteres; nasce com perfil equipe) |
 | POST | `/api/usuarios/{id}/desativar` | Desativar (não vale para o próprio usuário) |
 | POST | `/api/usuarios/{id}/reativar` | Reativar |
+| POST | `/api/usuarios/{id}/desbloquear` | Libera quem foi bloqueado por senhas erradas, em todas as redes (`422` para o administrador). A lista traz `bloqueado: true/false` |
 | POST | `/api/usuarios/{id}/senha` | `{novaSenha}`: senha provisória para quem esqueceu (não vale para o próprio usuário) |
 
 ## Pública (sem login)

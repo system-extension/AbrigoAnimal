@@ -60,7 +60,7 @@ responde **422** com a mensagem mostrada ao usuário; dado em formato inválido 
 |---|---|---|---|
 | RN-50 | Sem criar conta. Obrigatórios: nome, um contato (telefone com DDD ou e-mail) e **consentimento** LGPD | `Solicitacao` | RF-21, RF-25 |
 | RN-51 | Se vier de um animal, ele precisa estar **na vitrine** | `GestaoSolicitacoes` | RF-21 |
-| RN-52 | **Antispam**: campo isca escondido (se preenchido, finge sucesso e não grava) e limite de envios por IP por hora (padrão 5, configurável) | `GestaoSolicitacoes`, `LimitadorDeEnvios` | RF-26 |
+| RN-52 | **Antispam**: campo isca escondido (se preenchido, finge sucesso e não grava) e limite de envios por IP por hora (padrão 5, configurável; IP decidido por `IpDoCliente`) | `GestaoSolicitacoes`, `LimitadorDeEnvios` | RF-26 |
 | RN-53 | Toda solicitação nasce **nova**; a equipe muda para em contato, concluída ou descartada, com observação interna opcional | `Solicitacao` | RF-24 |
 | RN-54 | Ao chegar uma solicitação, o sistema publica um evento. Hoje o aviso só vai para o log (canal de notificação a definir) | `AvisoNovaSolicitacao` | RF-27 |
 
@@ -75,6 +75,7 @@ responde **422** com a mensagem mostrada ao usuário; dado em formato inválido 
 | RN-64 | **Trocar a própria senha** exige a senha atual, e a nova precisa ser diferente | `GestaoUsuarios` | RNF-03 |
 | RN-65 | **Esqueceu a senha**: o administrador define uma senha provisória (o sistema não envia e-mail). Nem ele usa esse caminho para a própria senha (RN-64). Quem já estava logado continua até a sessão expirar | `SegurancaConfig`, `GestaoUsuarios` | RNF-03 |
 | RN-66 | Usuário desativado pode ser **reativado** (pelo administrador); ninguém é apagado (o nome fica na auditoria de quem alterou cada cadastro) | `GestaoUsuarios` | RNF-09 |
+| RN-67 | **Bloqueio de login** ([ADR 0013](adr/0013-bloqueio-de-login.md)): 5 senhas erradas seguidas no mesmo e-mail e IP bloqueiam aquele e-mail naquele IP; um IP que erra senha em 3 e-mails diferentes em 1 hora é bloqueado por inteiro. Sem prazo. Além disso, 10 senhas erradas na mesma conta em 15 minutos, de qualquer IP, fazem a conta recusar logins por 15 minutos. O IP vem de `IpDoCliente` (o `X-Forwarded-For` enviado pelo visitante não é confiável). Bloqueado recebe a mesma resposta de senha errada, no mesmo tempo (toda recusa espera 400 ms), até com a senha certa. O administrador desbloqueia colegas na tela Equipe; a conta dele e IPs inteiros só pelo banco | `ProtecaoLogin`, `FiltroBloqueioLogin`, `IpDoCliente` | RNF-03 |
 
 ## Pontos em aberto (decidir com a ONG)
 
