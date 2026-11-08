@@ -1,4 +1,4 @@
-# 0001 · Monólito modular com Spring Modulith
+# 0005 · Monólito modular com Spring Modulith
 
 **Status:** aceita (2026-09-26)
 

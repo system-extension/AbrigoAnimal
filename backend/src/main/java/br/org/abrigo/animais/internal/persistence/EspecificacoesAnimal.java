@@ -1,6 +1,7 @@
 package br.org.abrigo.animais.internal.persistence;
 
 import br.org.abrigo.animais.Especie;
+import br.org.abrigo.animais.Porte;
 import br.org.abrigo.animais.Sexo;
 import br.org.abrigo.animais.SituacaoAnimal;
 import br.org.abrigo.animais.internal.domain.Animal;
@@ -21,7 +22,7 @@ public final class EspecificacoesAnimal {
     }
 
     /** O que o público pode ver: visível e sem óbito. */
-    public static Specification<Animal> daVitrine(Especie especie, Sexo sexo, Boolean idoso) {
+    public static Specification<Animal> daVitrine(Especie especie, Sexo sexo, Porte porte, Boolean idoso) {
         return (root, query, cb) -> {
             List<Predicate> p = new ArrayList<>();
             p.add(cb.isTrue(root.<Boolean>get("visivelNaVitrine")));
@@ -31,6 +32,9 @@ public final class EspecificacoesAnimal {
             }
             if (sexo != null) {
                 p.add(cb.equal(root.get("sexo"), sexo));
+            }
+            if (porte != null) {
+                p.add(cb.equal(root.get("porte"), porte));
             }
             if (idoso != null) {
                 p.add(cb.equal(root.<Boolean>get("idoso"), idoso));
@@ -45,9 +49,12 @@ public final class EspecificacoesAnimal {
             List<Predicate> p = new ArrayList<>();
             if (f.busca() != null && !f.busca().isBlank()) {
                 String termo = "%" + f.busca().trim().toLowerCase(Locale.ROOT) + "%";
+                // chip sem espaços: quem digita "963 003 000..." também encontra
+                String chip = "%" + f.busca().replaceAll("\\s+", "") + "%";
                 p.add(cb.or(
                         cb.like(cb.lower(root.<String>get("nome")), termo),
-                        cb.like(cb.lower(root.<String>get("chip")), termo)));
+                        cb.like(root.<String>get("chip"), chip),
+                        cb.like(root.<String>get("chipAdicional"), chip)));
             }
             if (f.especie() != null) {
                 p.add(cb.equal(root.get("especie"), f.especie()));
@@ -61,10 +68,16 @@ public final class EspecificacoesAnimal {
             if (f.idoso() != null) {
                 p.add(cb.equal(root.<Boolean>get("idoso"), f.idoso()));
             }
+            if (Boolean.TRUE.equals(f.semFoto())) {
+                // pendência de cadastro: sem foto e ainda no abrigo (óbito não precisa mais de foto)
+                p.add(cb.isEmpty(root.<java.util.Collection<?>>get("fotos")));
+                p.add(cb.notEqual(root.get("situacao"), SituacaoAnimal.OBITO));
+            }
             return cb.and(p.toArray(Predicate[]::new));
         };
     }
 
-    public record FiltroAnimais(String busca, Especie especie, SituacaoAnimal situacao, String ala, Boolean idoso) {
+    public record FiltroAnimais(String busca, Especie especie, SituacaoAnimal situacao, String ala, Boolean idoso,
+                                Boolean semFoto) {
     }
 }

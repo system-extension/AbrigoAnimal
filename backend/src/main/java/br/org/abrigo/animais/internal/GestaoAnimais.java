@@ -50,7 +50,7 @@ public class GestaoAnimais {
     }
 
     public AnimalDetalhe cadastrar(DadosAnimal dados) {
-        validarChipUnico(dados.chip(), null);
+        validarChipsUnicos(dados, null);
         Animal animal = animais.save(Animal.cadastrar(dados));
         return mapeador.paraDetalhe(animal);
     }
@@ -64,7 +64,7 @@ public class GestaoAnimais {
         if (versaoEsperada != null && !Objects.equals(versaoEsperada, animal.getVersao())) {
             throw new ObjectOptimisticLockingFailureException(Animal.class, id);
         }
-        validarChipUnico(dados.chip(), id);
+        validarChipsUnicos(dados, id);
         animal.atualizar(dados);
         return mapeador.paraDetalhe(animal);
     }
@@ -138,15 +138,21 @@ public class GestaoAnimais {
         return animais.findById(id).orElseThrow(() -> RecursoNaoEncontradoException.de("Animal", id));
     }
 
-    private void validarChipUnico(String chip, UUID idAtual) {
-        if (chip == null || chip.isBlank()) {
-            return;
+    /** Nenhum dos dois chips pode existir em OUTRO animal, em nenhum dos dois campos. */
+    private void validarChipsUnicos(DadosAnimal dados, UUID idAtual) {
+        for (String bruto : new String[] {dados.chip(), dados.chipAdicional()}) {
+            String chip = Animal.limparChip(bruto);
+            if (chip == null) {
+                continue;
+            }
+            animais.buscarPorChip(chip).stream()
+                    .filter(outro -> !outro.getId().equals(idAtual))
+                    .findFirst()
+                    .ifPresent(outro -> {
+                        throw new RegraNegocioException("O chip " + chip + " já está no cadastro de "
+                                + outro.getNome() + ".");
+                    });
         }
-        animais.findByChip(chip.trim())
-                .filter(outro -> !outro.getId().equals(idAtual))
-                .ifPresent(outro -> {
-                    throw new RegraNegocioException("Já existe um animal com este chip: " + outro.getNome() + ".");
-                });
     }
 
     private static byte[] lerImagemValida(MultipartFile arquivo) {

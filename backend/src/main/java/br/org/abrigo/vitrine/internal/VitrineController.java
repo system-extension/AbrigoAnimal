@@ -2,6 +2,7 @@ package br.org.abrigo.vitrine.internal;
 
 import br.org.abrigo.animais.AnimalService;
 import br.org.abrigo.animais.Especie;
+import br.org.abrigo.animais.Porte;
 import br.org.abrigo.animais.Sexo;
 import br.org.abrigo.plataforma.Pagina;
 import br.org.abrigo.plataforma.RecursoNaoEncontradoException;
@@ -26,11 +27,14 @@ class VitrineController {
     @GetMapping
     Pagina<AnimalPublicoResponse> listar(@RequestParam(required = false) Especie especie,
                                          @RequestParam(required = false) Sexo sexo,
+                                         @RequestParam(required = false) Porte porte,
                                          @RequestParam(required = false) Boolean idoso,
                                          @RequestParam(defaultValue = "0") int pagina,
                                          @RequestParam(defaultValue = "24") int tamanho) {
-        var pageable = PageRequest.of(Math.max(pagina, 0), Math.clamp(tamanho, 1, 48), Sort.by("nome"));
-        return animais.listarVitrine(especie, sexo, idoso, pageable).map(AnimalPublicoResponse::de);
+        // idosos primeiro: são os que mais precisam de visibilidade (e quase nunca são adotados)
+        var ordem = Sort.by(Sort.Order.desc("idoso"), Sort.Order.asc("nome"));
+        var pageable = PageRequest.of(Math.max(pagina, 0), Math.clamp(tamanho, 1, 48), ordem);
+        return animais.listarVitrine(especie, sexo, porte, idoso, pageable).map(AnimalPublicoResponse::de);
     }
 
     @GetMapping("/{slug}")

@@ -1,0 +1,121 @@
+.trilho-videos {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 42%;
+  gap: 0.75rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  margin-inline: -0.75rem;
+  padding: 0.25rem 0.75rem 0.75rem;
+}
+.trilho-videos::-webkit-scrollbar {
+  display: none;
+}
+@media (min-width: 768px) {
+  .trilho-videos {
+    grid-auto-columns: 22%;
+  }
+}
+@media (min-width: 1200px) {
+  .trilho-videos {
+    grid-auto-columns: calc(20% - 0.6rem);
+  }
+}
+.cartao-video {
+  position: relative;
+  display: block;
+  aspect-ratio: 9 / 16;
+  padding: 0;
+  border: 0;
+  border-radius: var(--raio-lg);
+  overflow: hidden;
+  background: var(--tinta);
+  scroll-snap-align: start;
+  box-shadow: var(--sombra);
+  text-align: left;
+  cursor: pointer;
+}
+.cartao-video img,
+.cartao-video-sem-capa {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+.cartao-video:hover img {
+  transform: scale(1.04);
+}
+.cartao-video::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.75));
+}
+.cartao-video-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--laranja);
+  font-size: 1.2rem;
+  padding-left: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+.cartao-video-texto {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  display: grid;
+  padding: 0.75rem;
+  color: #fff;
+  line-height: 1.25;
+}
+.cartao-video-texto strong {
+  font-size: 0.92rem;
+}
+.cartao-video-texto small {
+  opacity: 0.85;
+}
+.cartao-video-exemplo {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 1;
+  padding: 0.1rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.reprodutor {
+  display: flex;
+  justify-content: center;
+  background: #000;
+  border-radius: var(--raio);
+  overflow: hidden;
+}
+.reprodutor video,
+.reprodutor iframe {
+  display: block;
+  width: 100%;
+  max-height: 62dvh;
+  aspect-ratio: 9 / 16;
+  border: 0;
+}
+.reprodutor video {
+  width: auto;
+  max-width: 100%;
+}

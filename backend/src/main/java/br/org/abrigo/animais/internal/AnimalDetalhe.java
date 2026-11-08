@@ -1,8 +1,10 @@
 package br.org.abrigo.animais.internal;
 
 import br.org.abrigo.animais.Especie;
+import br.org.abrigo.animais.Porte;
 import br.org.abrigo.animais.Sexo;
 import br.org.abrigo.animais.SituacaoAnimal;
+import br.org.abrigo.animais.TipoVacina;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -18,18 +20,22 @@ public record AnimalDetalhe(
         Especie especie,
         Sexo sexo,
         String cor,
+        Porte porte,
         LocalDate dataNascimentoEstimada,
         Integer idadeAnos,
-        boolean castrado,
+        Boolean castrado,
         String chip,
-        String canil,
+        String chipAdicional,
         String ala,
+        String canil,
         boolean idoso,
-        boolean medicacaoContinua,
         String descricao,
+        List<String> temperamento,
+        // derivado (medicações preenchidas); mantido porque o formulário usa um interruptor
+        boolean medicacaoContinua,
         String medicacoes,
         String condicoesSaude,
-        String vacinas,
+        List<Vacina> vacinas,
         SituacaoAnimal situacao,
         LocalDate dataObito,
         boolean visivelNaVitrine,
@@ -39,5 +45,8 @@ public record AnimalDetalhe(
         String atualizadoPor) {
 
     public record Foto(UUID id, String url, boolean principal) {
+    }
+
+    public record Vacina(TipoVacina tipo, LocalDate ultimaDose) {
     }
 }

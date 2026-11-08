@@ -1,0 +1,655 @@
+/* =====================================================================
+   Tema do Abrigo Animal Joinville: tokens e componentes base.
+   Padrão e regras de uso em docs/DESIGN.md (fonte única: sem arquivos de override).
+   ===================================================================== */
+:root {
+  /* Guia completo de uso: docs/DESIGN.md. Mudou aqui? Atualize o guia. */
+
+  /* Botão principal: o laranja do logo, com texto escuro. #F39534 + tinta = 7,5:1.
+     Texto branco no laranja vivo não passa no contraste (2,3:1): por isso o texto é escuro. */
+  --acao: #f39534;
+  --acao-hover: #e8862a;
+  --acao-texto: #1c1b1a;
+
+  /* Laranja de texto: links, chip selecionado, ícones. #C2410C sobre branco = 5,2:1 */
+  --laranja: #c2410c;
+  --laranja-escuro: #9a3412;
+  --laranja-logo: #f39534; /* mesmo tom do botão; decorativo, nunca com texto branco */
+  --laranja-suave: #fff1e6;
+
+  /* Status positivo (disponível, idoso, ligado). #3E6B3A + branco = 6,2:1 */
+  --verde: #3e6b3a;
+  --verde-escuro: #2f5a2b;
+  --verde-logo: #b3d39e;
+  --verde-suave: #e8f2e1;
+
+  /* Perigo: só excluir, óbito e erros */
+  --perigo: #b42318;
+  --perigo-suave: #fdecea;
+  --perigo-borda: #f4c7c3;
+
+  /* Neutros */
+  --tinta: #1c1b1a;
+  --texto: #2e2b29;
+  --texto-suave: #6b6560; /* 5,5:1 sobre o fundo: não clarear */
+  --linha: #e7e4df;
+  --fundo: #fafaf8;
+  --superficie: #ffffff;
+  --neutro-suave: #f3f1ee;
+
+  --azul: #1d5fa6;
+  --azul-suave: #e8f1fb;
+  --amarelo-suave: #fff7d6;
+
+  /* Só no logotipo: não é cor de interface */
+  --marca-terracota: #8a3b32;
+
+  --raio: 14px;
+  --raio-lg: 20px;
+  --sombra: 0 1px 2px rgba(28, 27, 26, 0.04), 0 4px 16px rgba(28, 27, 26, 0.06);
+  --sombra-forte: 0 12px 32px rgba(28, 27, 26, 0.14);
+  --toque: 48px; /* altura mínima de área de toque */
+  --fonte: 'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --fonte-titulo: 'Lora Variable', Georgia, 'Times New Roman', serif;
+
+  /* Bootstrap herda as cores da marca */
+  --bs-body-font-family: var(--fonte);
+  --bs-body-color: var(--texto);
+  --bs-body-bg: var(--fundo);
+  --bs-primary: var(--laranja);
+  --bs-primary-rgb: 194, 65, 12;
+  --bs-danger: var(--perigo);
+  --bs-danger-rgb: 180, 35, 24;
+  --bs-success: var(--verde);
+  --bs-success-rgb: 62, 107, 58;
+  --bs-link-color: var(--laranja);
+  --bs-link-color-rgb: 194, 65, 12;
+  --bs-link-hover-color: var(--laranja-escuro);
+  --bs-border-color: var(--linha);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: 84px;
+}
+body {
+  min-width: 320px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: var(--fonte);
+  overflow-x: clip;
+}
+h1,
+h2,
+h3,
+h4,
+.h1,
+.h2,
+.h3,
+.h4 {
+  color: var(--tinta);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+h5,
+h6,
+.h5,
+.h6 {
+  color: var(--tinta);
+  font-weight: 700;
+}
+img {
+  max-width: 100%;
+}
+a,
+button,
+input,
+select,
+textarea,
+summary,
+label {
+  touch-action: manipulation;
+}
+a {
+  color: var(--laranja);
+}
+:focus-visible {
+  outline: 3px solid var(--laranja);
+  outline-offset: 2px;
+}
+.visualmente-oculto {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ------------------------------ Botões ------------------------------ */
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: var(--toque);
+  padding: 0.7rem 1.4rem;
+  border: 1.5px solid transparent;
+  border-radius: 999px; /* pílula: conversa com chips e selos */
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    color 0.2s,
+    transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.botao:active {
+  transform: scale(0.97);
+}
+.botao:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+/* Botão principal: laranja do logo com leve volume (luz em cima) e sombra quente.
+   Ícone no fim com a classe .botao-bolha (seta, pata) vira uma bolinha escura que anda no hover. */
+.botao-principal {
+  background: linear-gradient(180deg, #f6a24b 0%, var(--acao) 55%, #ef8a26 100%);
+  color: var(--acao-texto);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 1px 2px rgba(28, 27, 26, 0.08),
+    0 6px 18px rgba(232, 134, 42, 0.32);
+}
+.botao-principal:hover {
+  background: linear-gradient(180deg, #f39a3f 0%, var(--acao-hover) 60%, #df7b1c 100%);
+  color: var(--acao-texto);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 2px 4px rgba(28, 27, 26, 0.08),
+    0 10px 24px rgba(232, 134, 42, 0.38);
+}
+.botao-principal:active {
+  transform: translateY(0) scale(0.97);
+}
+.botao-principal:has(> .botao-bolha) {
+  padding-right: 0.45rem;
+}
+.botao-principal > .botao-bolha {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  margin-left: 0.25rem;
+  border-radius: 50%;
+  background: var(--tinta);
+  color: var(--acao);
+  font-size: 0.85rem;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.botao-principal:hover > .botao-bolha {
+  transform: translateX(3px);
+}
+
+/* Chamada de destaque (uma por página, ex.: "Quero adotar" no convite). */
+.botao-chamada {
+  min-height: 64px;
+  padding: 0.5rem 0.55rem 0.5rem 1.9rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 0 0 6px rgba(243, 149, 52, 0.16),
+    0 14px 32px rgba(232, 134, 42, 0.38);
+}
+.botao-chamada:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 0 0 8px rgba(243, 149, 52, 0.2),
+    0 18px 38px rgba(232, 134, 42, 0.42);
+}
+.botao-principal.botao-chamada > .botao-bolha {
+  width: 48px;
+  height: 48px;
+  margin-left: 0.6rem;
+  font-size: 1.15rem;
+}
+.botao-principal.botao-chamada:hover > .botao-bolha {
+  transform: rotate(-14deg) scale(1.06);
+}
+.botao-verde {
+  background: var(--verde);
+  color: #fff;
+}
+.botao-verde:hover {
+  background: var(--verde-escuro);
+  color: #fff;
+}
+.botao-contorno {
+  background: var(--superficie);
+  color: var(--tinta);
+  border-color: #d9d5cf;
+}
+.botao-contorno:hover {
+  background: var(--neutro-suave);
+  border-color: var(--tinta);
+  color: var(--tinta);
+}
+.botao-texto {
+  background: none;
+  color: var(--laranja);
+  padding-inline: 0.6rem;
+}
+.botao-perigo {
+  background: var(--perigo-suave);
+  color: var(--perigo);
+  border-color: var(--perigo-borda);
+}
+.botao-perigo:hover {
+  background: var(--perigo);
+  border-color: var(--perigo);
+  color: #fff;
+}
+.botao-bloco {
+  width: 100%;
+}
+.botao-grande {
+  min-height: 56px;
+  font-size: 1.0625rem;
+  padding-inline: 1.6rem;
+}
+.botao-principal.botao-grande > .botao-bolha {
+  width: 40px;
+  height: 40px;
+}
+.botao-icone {
+  width: var(--toque);
+  height: var(--toque);
+  padding: 0;
+  border-radius: 50%;
+}
+
+/* ------------------------------- Chips ------------------------------ */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.chips-rolagem {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  /* Encosta na borda da tela sem passar dela (usa o mesmo respiro do .container). */
+  margin-inline: calc(var(--bs-gutter-x, 1.5rem) * -0.5);
+  padding-inline: calc(var(--bs-gutter-x, 1.5rem) * 0.5);
+}
+.chips-rolagem::-webkit-scrollbar {
+  display: none;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1.5px solid var(--linha);
+  border-radius: 999px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.chip[aria-pressed='true'],
+.chip[aria-checked='true'] {
+  border-color: var(--laranja);
+  background: var(--laranja-suave);
+  color: var(--laranja-escuro);
+  font-weight: 700;
+}
+.chip-pequeno {
+  min-height: 0;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.8125rem;
+  border-width: 1px;
+  cursor: default;
+}
+
+/* Selos (status) */
+.selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.selo-verde {
+  background: var(--verde-suave);
+  color: var(--verde-escuro);
+}
+.selo-laranja {
+  background: var(--laranja-suave);
+  color: var(--laranja-escuro);
+}
+.selo-amarelo {
+  background: var(--amarelo-suave);
+  color: #6b4f00;
+}
+.selo-azul {
+  background: var(--azul-suave);
+  color: var(--azul);
+}
+.selo-cinza {
+  background: var(--neutro-suave);
+  color: #4d4844;
+}
+
+/* ------------------------------- Cartões ---------------------------- */
+.cartao {
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--sombra);
+}
+.cartao-corpo {
+  padding: 1.25rem;
+}
+
+/* ------------------------------ Campos ------------------------------ */
+.campo {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 1.15rem;
+}
+.campo > label,
+.campo-rotulo {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--tinta);
+}
+.campo-dica {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+.campo-erro {
+  font-size: 0.85rem;
+  color: var(--perigo);
+  font-weight: 600;
+}
+.entrada {
+  width: 100%;
+  min-height: 52px;
+  padding: 0.75rem 0.95rem;
+  border: 1.5px solid #d9d5cf;
+  border-radius: var(--raio);
+  background: var(--superficie);
+  color: var(--tinta);
+  font-size: max(1rem, 16px); /* 16px: evita o zoom automático do iPhone */
+}
+textarea.entrada {
+  min-height: 110px;
+  resize: vertical;
+}
+.entrada:focus {
+  outline: none;
+  border-color: var(--laranja);
+  box-shadow: 0 0 0 4px rgba(194, 65, 12, 0.14);
+}
+.entrada[aria-invalid='true'] {
+  border-color: var(--perigo);
+}
+
+/* Interruptor (liga/desliga) grande, fácil de tocar */
+.interruptor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 60px;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--linha);
+  cursor: pointer;
+}
+.interruptor:last-child {
+  border-bottom: 0;
+}
+.interruptor-texto strong {
+  display: block;
+  color: var(--tinta);
+}
+.interruptor-texto small {
+  color: var(--texto-suave);
+}
+.interruptor input {
+  appearance: none;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 32px;
+  border-radius: 999px;
+  background: #cfcac4;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.interruptor input::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s;
+}
+.interruptor input:checked {
+  background: var(--verde);
+}
+.interruptor input:checked::after {
+  transform: translateX(22px);
+}
+
+/* Contador +/– para idade */
+.contador {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.contador .botao-texto {
+  white-space: nowrap;
+}
+.contador output {
+  min-width: 6.5rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--tinta);
+}
+
+/* ------------------------------- Seções ----------------------------- */
+.secao {
+  padding-block: 2.5rem;
+}
+.sobretitulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--verde-escuro); /* rótulo, não ação: não usa laranja */
+}
+.titulo-secao {
+  font-size: clamp(1.75rem, 6vw, 2.5rem);
+  line-height: 1.15;
+  margin: 0.3rem 0 0.6rem;
+}
+
+/* Serifada só nos títulos de destaque do site público (docs/DESIGN.md). */
+.titulo-secao,
+.hero-titulo,
+.pagina-animal-nome {
+  font-family: var(--fonte-titulo);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.titulo-secao em,
+.hero-titulo em,
+.pagina-animal-nome em {
+  font-style: italic;
+  font-weight: 500;
+  color: inherit;
+}
+.texto-suave {
+  color: var(--texto-suave);
+}
+.texto-perigo {
+  color: var(--perigo);
+}
+
+/* Rodapé de lista paginada (<CarregarMais>) */
+.carregar-mais {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 0 0.5rem;
+}
+
+/* ---------------------------- Avisos (toast) ------------------------ */
+.avisos {
+  position: fixed;
+  left: 50%;
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: grid;
+  gap: 0.5rem;
+  width: min(92vw, 420px);
+  pointer-events: none;
+}
+.aviso {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.9rem 1rem;
+  border-radius: var(--raio);
+  background: var(--tinta);
+  color: #fff;
+  box-shadow: var(--sombra-forte);
+  font-weight: 600;
+  pointer-events: auto;
+  animation: subir 0.2s ease-out;
+}
+.aviso-erro {
+  background: var(--perigo);
+}
+.aviso-sucesso i {
+  color: var(--verde-logo);
+}
+@keyframes subir {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+}
+
+/* ------------------------- Folha inferior (sheet) ------------------- */
+.folha-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: rgba(28, 27, 26, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: aparecer 0.15s;
+}
+.folha {
+  width: 100%;
+  max-width: 560px;
+  max-height: 88dvh;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  background: var(--superficie);
+  border-radius: 24px 24px 0 0;
+  padding: 0.75rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
+  animation: subir 0.2s ease-out;
+}
+.folha::before {
+  content: '';
+  display: block;
+  width: 44px;
+  height: 5px;
+  border-radius: 9px;
+  background: var(--linha);
+  margin: 0 auto 0.9rem;
+}
+@media (min-width: 768px) {
+  .folha-fundo {
+    align-items: center;
+  }
+  .folha {
+    border-radius: 24px;
+  }
+}
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ------------------------------ Estados ----------------------------- */
+.carregando {
+  display: grid;
+  place-items: center;
+  gap: 0.75rem;
+  padding: 3rem 1rem;
+  color: var(--texto-suave);
+}
+.esqueleto {
+  background: linear-gradient(90deg, #efedea 25%, #f7f6f4 50%, #efedea 75%);
+  background-size: 200% 100%;
+  animation: brilho 1.2s infinite;
+  border-radius: var(--raio-lg);
+}
+@keyframes brilho {
+  to {
+    background-position: -200% 0;
+  }
+}
+.vazio {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--texto-suave);
+}
+.vazio i {
+  font-size: 2.2rem;
+  color: var(--verde-logo);
+  margin-bottom: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

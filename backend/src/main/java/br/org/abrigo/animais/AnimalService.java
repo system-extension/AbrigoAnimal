@@ -41,8 +41,9 @@ public class AnimalService {
                 .map(mapeador::paraResumo);
     }
 
-    public Pagina<AnimalVitrine> listarVitrine(Especie especie, Sexo sexo, Boolean idoso, Pageable pageable) {
-        var filtro = EspecificacoesAnimal.daVitrine(especie, sexo, idoso);
+    public Pagina<AnimalVitrine> listarVitrine(Especie especie, Sexo sexo, Porte porte, Boolean idoso,
+                                               Pageable pageable) {
+        var filtro = EspecificacoesAnimal.daVitrine(especie, sexo, porte, idoso);
         return Pagina.de(animais.findAll(filtro, pageable).map(mapeador::paraVitrine));
     }
 

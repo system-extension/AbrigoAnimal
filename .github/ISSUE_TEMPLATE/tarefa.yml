@@ -1,0 +1,30 @@
+name: Tarefa
+description: Uma funcionalidade ou ajuste pequeno o bastante para uma pessoa entregar em poucos dias
+labels: []
+body:
+  - type: textarea
+    id: objetivo
+    attributes:
+      label: Objetivo
+      description: O que muda para quem usa, e por quê. Cite o requisito (RF-xx / RNF-xx) se houver.
+    validations:
+      required: true
+  - type: textarea
+    id: escopo
+    attributes:
+      label: Escopo
+      description: Lista do que precisa ser feito
+      value: |
+        - [ ] 
+    validations:
+      required: true
+  - type: textarea
+    id: pronto
+    attributes:
+      label: Pronto quando
+      description: Como saber que terminou (o que dá para testar)
+  - type: textarea
+    id: refs
+    attributes:
+      label: Referências
+      description: Links do Notion, telas do Figma, issues relacionadas

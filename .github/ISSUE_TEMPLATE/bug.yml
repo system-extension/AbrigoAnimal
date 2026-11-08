@@ -1,0 +1,31 @@
+name: Bug
+description: Algo que deveria funcionar e não funciona
+labels: ["bug"]
+body:
+  - type: textarea
+    id: passos
+    attributes:
+      label: Como reproduzir
+      value: |
+        1. 
+        2. 
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: O que era esperado
+    validations:
+      required: true
+  - type: textarea
+    id: aconteceu
+    attributes:
+      label: O que aconteceu
+      description: Mensagem de erro, log ou print
+    validations:
+      required: true
+  - type: input
+    id: onde
+    attributes:
+      label: Onde
+      description: "Ex.: celular Samsung A55 / Chrome, ambiente local ou produção"

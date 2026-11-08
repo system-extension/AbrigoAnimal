@@ -47,6 +47,85 @@ class AnimaisIntegrationTest extends IntegracaoTest {
     }
 
     @Test
+    void chipAdicionalTambemNaoPodeRepetir() throws Exception {
+        // o leitor pode ler qualquer um dos dois chips: os dois precisam ser únicos no cadastro inteiro
+        cadastrarAnimal("{\"nome\": \"Celi\", \"especie\": \"CAO\", \"chip\": \"CHIP-A-1\", \"chipAdicional\": \"CHIP-B-1\"}");
+
+        mvc.perform(post("/api/animais").with(user(EQUIPE)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\": \"Outro\", \"especie\": \"CAO\", \"chip\": \"CHIP-B-1\"}"))
+                .andExpect(status().is(422));
+    }
+
+    @Test
+    void buscaEncontraPeloChipAdicional() throws Exception {
+        cadastrarAnimal("{\"nome\": \"Bicuda\", \"especie\": \"CAO\", \"chip\": \"963003002252391\", \"chipAdicional\": \"963003002176468\"}");
+
+        mvc.perform(get("/api/animais").param("busca", "963 003 002 176468").with(user(EQUIPE)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.itens[0].nome").value("Bicuda"));
+    }
+
+    @Test
+    void vitrineMostraPorteTemperamentoECastradoNaoInformado() throws Exception {
+        String slug = campo(cadastrarAnimal("""
+                {"nome": "Margarida", "especie": "CAO", "porte": "MEDIO", "temperamento": ["Dócil", "Calmo"],
+                 "medicacoes": "Remédio para o coração"}
+                """), "$.slug");
+
+        mvc.perform(get("/api/public/animais/" + slug))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.porte").value("MEDIO"))
+                .andExpect(jsonPath("$.temperamento[1]").value("Calmo"))
+                .andExpect(jsonPath("$.castrado").isEmpty())
+                .andExpect(jsonPath("$.medicacaoContinua").value(true));
+    }
+
+    @Test
+    void vacinasVaoJuntoNoCadastroEAVitrineMostraSoQuais() throws Exception {
+        String animal = cadastrarAnimal("""
+                {"nome": "Biscoito", "especie": "CAO",
+                 "vacinas": [{"tipo": "V8_V10", "ultimaDose": "2025-12-29"}, {"tipo": "ANTIRRABICA"}]}
+                """);
+        String id = campo(animal, "$.id");
+
+        mvc.perform(get("/api/animais/" + id).with(user(EQUIPE)))
+                .andExpect(jsonPath("$.vacinas.length()").value(2))
+                .andExpect(jsonPath("$.vacinas[?(@.tipo == 'V8_V10')].ultimaDose").value("2025-12-29"));
+
+        mvc.perform(get("/api/public/animais/" + campo(animal, "$.slug")))
+                .andExpect(jsonPath("$.vacinas.length()").value(2))
+                .andExpect(jsonPath("$.vacinas[0]").value("ANTIRRABICA"));
+
+        // editar com a lista vazia remove as vacinas (a lista enviada substitui a anterior)
+        mvc.perform(put("/api/animais/" + id).with(user(EQUIPE)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\": \"Biscoito\", \"especie\": \"CAO\", \"versao\": 0, \"vacinas\": []}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.vacinas.length()").value(0));
+    }
+
+    @Test
+    void vacinaComDataFuturaDa400() throws Exception {
+        mvc.perform(post("/api/animais").with(user(EQUIPE)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome": "Bob", "especie": "CAO", "vacinas": [{"tipo": "V8_V10", "ultimaDose": "2999-01-01"}]}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void filtroSemFotoMostraSoQuemPrecisaDeFoto() throws Exception {
+        String nome = "SemFoto-" + java.util.UUID.randomUUID().toString().substring(0, 6);
+        cadastrarAnimal("{\"nome\": \"" + nome + "\", \"especie\": \"CAO\"}");
+
+        mvc.perform(get("/api/animais").param("semFoto", "true").param("busca", nome).with(user(EQUIPE)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(1));
+    }
+
+    @Test
     void obitoTiraDaVitrine() throws Exception {
         String animal = cadastrarAnimalSimples("Estrela");
         String id = campo(animal, "$.id");

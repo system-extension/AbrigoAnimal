@@ -12,14 +12,18 @@ public record AnimalVitrine(
         Especie especie,
         Sexo sexo,
         String cor,
+        Porte porte,
         Integer idadeAnos,
-        boolean castrado,
+        // null = não informado
+        Boolean castrado,
         boolean idoso,
-        boolean medicacaoContinua,
         String descricao,
+        List<String> temperamento,
+        boolean medicacaoContinua,
         String medicacoes,
         String condicoesSaude,
-        String vacinas,
+        // só QUAIS vacinas tomou (as datas ficam no painel)
+        List<TipoVacina> vacinas,
         SituacaoAnimal situacao,
         String fotoPrincipal,
         List<String> fotos) {
