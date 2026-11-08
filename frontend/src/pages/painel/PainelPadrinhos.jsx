@@ -199,7 +199,9 @@ export default function PainelPadrinhos() {
   const salvarPessoa = async (e) => {
     e.preventDefault();
     try {
-      const p = await pessoas.salvar({ ...nova, consentimento: nova.consentimento });
+      // o backend chama o campo de "consentiu" (PessoaRequest)
+      const { consentimento, ...dados } = nova;
+      const p = await pessoas.salvar({ ...dados, consentiu: consentimento });
       avisar.sucesso('Pessoa cadastrada');
       setNova(null);
       setErros({});
