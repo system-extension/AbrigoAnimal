@@ -1,11 +1,16 @@
 /**
  * Cliente HTTP único. Toda chamada ao backend passa por aqui (só no modo API real).
  *
- * Cuida de 3 coisas que todas as chamadas precisam:
+ * Cuida de 4 coisas que todas as chamadas precisam:
  *  1. cookie de sessão  → credentials: 'include' (o navegador envia o cookie de login sozinho)
  *  2. proteção CSRF     → em POST/PUT/DELETE, copia o cookie XSRF-TOKEN para o header X-XSRF-TOKEN
  *  3. erros padronizados → o backend responde { title, detail, campos } (Problem Details)
+ *  4. aviso de alteração → depois de gravar com sucesso, avisa as telas abertas (EVENTO_DADOS)
+ *     para recarregarem suas listas sem piscar (ver hooks/useCarregar.js)
  */
+
+/** Disparado em window depois de qualquer gravação bem-sucedida no backend. */
+export const EVENTO_DADOS = 'abrigo:dados-alterados';
 
 export class ErroApi extends Error {
   constructor(status, corpo) {
@@ -62,6 +67,10 @@ export async function requisicao(caminho, { metodo = 'GET', corpo, formulario } 
     throw new ErroApi(0, { detail: 'Sem conexão. Verifique a internet e tente de novo.' });
   }
 
+  if (resposta.ok && metodo !== 'GET' && !caminho.startsWith('/api/auth/')) {
+    // login/logout ficam de fora: quem cuida da sessão é o contexto Sessao
+    window.dispatchEvent(new Event(EVENTO_DADOS));
+  }
   if (resposta.status === 204) return null;
   const dados = await resposta.json().catch(() => null);
   if (!resposta.ok) throw new ErroApi(resposta.status, dados);
