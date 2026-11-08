@@ -41,7 +41,8 @@ class SegurancaIntegrationTest extends IntegracaoTest {
 
         mvc.perform(get("/api/auth/me").session(sessao))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("admin@teste.org"));
+                .andExpect(jsonPath("$.email").value("admin@teste.org"))
+                .andExpect(jsonPath("$.administrador").value(true));
     }
 
     @Test

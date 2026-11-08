@@ -17,6 +17,7 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
  *
  * <ul>
  *   <li>/api/public/** → aberto (vitrine e formulário de interesse)</li>
+ *   <li>/api/usuarios/** → só o administrador (gerenciar a equipe, ADR 0012)</li>
  *   <li>/api/** → exige sessão (equipe da ONG)</li>
  *   <li>resto (arquivos do React, fotos, /animais/{slug}) → aberto</li>
  * </ul>
@@ -34,6 +35,7 @@ class SegurancaConfig {
                 .authorizeHttpRequests(regras -> regras
                         .requestMatchers("/api/public/**", "/api/auth/csrf").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers("/api/usuarios", "/api/usuarios/**").hasRole("ADMIN")
                         .requestMatchers("/api/**", "/actuator/**").authenticated()
                         .anyRequest().permitAll())
                 .csrf(csrf -> csrf

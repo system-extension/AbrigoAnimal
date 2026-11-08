@@ -45,9 +45,25 @@ class UsuariosController {
         return gestao.desativar(id, autenticacao.getName());
     }
 
+    @PostMapping("/{id}/reativar")
+    UsuarioResposta reativar(@PathVariable UUID id) {
+        return gestao.reativar(id);
+    }
+
+    /** Senha provisória para quem esqueceu a sua (ver GestaoUsuarios.redefinirSenha). */
+    @PostMapping("/{id}/senha")
+    UsuarioResposta redefinirSenha(@PathVariable UUID id, @Valid @RequestBody NovaSenhaRequest req,
+                                   Authentication autenticacao) {
+        return gestao.redefinirSenha(id, req.novaSenha(), autenticacao.getName());
+    }
+
     record NovoUsuarioRequest(
             @NotBlank(message = "Informe o nome") @Size(max = 150) String nome,
             @NotBlank(message = "Informe o e-mail") @Email(message = "E-mail inválido") String email,
-            @NotBlank(message = "Informe a senha") @Size(min = 8, max = 100, message = "A senha precisa ter entre 8 e 100 caracteres") String senha) {
+            @NotBlank(message = "Informe a senha") @Size(min = 8, max = 72, message = "A senha precisa ter entre 8 e 72 caracteres") String senha) {
+    }
+
+    record NovaSenhaRequest(
+            @NotBlank(message = "Informe a nova senha") @Size(min = 8, max = 72, message = "A senha precisa ter entre 8 e 72 caracteres") String novaSenha) {
     }
 }
