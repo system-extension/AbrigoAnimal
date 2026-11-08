@@ -37,6 +37,19 @@ export default function LayoutPainel() {
           <strong>Painel</strong>
         </Link>
         <div className="d-flex align-items-center gap-1">
+          <Link
+            to="/painel/equipe"
+            className="botao botao-texto"
+            title={usuario?.administrador ? 'Equipe e minha senha' : 'Minha conta'}
+          >
+            <i
+              className={`fa-solid ${usuario?.administrador ? 'fa-users-gear' : 'fa-user-gear'}`}
+              aria-hidden="true"
+            />
+            <span className="d-none d-sm-inline">
+              {usuario?.administrador ? 'Equipe' : 'Minha conta'}
+            </span>
+          </Link>
           <Link to="/" className="botao botao-texto" target="_blank" title="Abrir o site público">
             <i className="fa-solid fa-arrow-up-right-from-square" aria-hidden="true" />
             <span className="d-none d-sm-inline">Ver site</span>

@@ -19,6 +19,7 @@ import PainelAnimais from './pages/painel/PainelAnimais';
 import FormularioAnimal from './pages/painel/FormularioAnimal';
 import PainelSolicitacoes from './pages/painel/PainelSolicitacoes';
 import PainelPadrinhos from './pages/painel/PainelPadrinhos';
+import PainelEquipe from './pages/painel/PainelEquipe';
 
 /** Links antigos do protótipo continuam funcionando. */
 function RedirecionarPet() {
@@ -70,6 +71,7 @@ export default function App() {
                 <Route path="animais/:id" element={<FormularioAnimal key="editar" />} />
                 <Route path="solicitacoes" element={<PainelSolicitacoes />} />
                 <Route path="padrinhos" element={<PainelPadrinhos />} />
+                <Route path="equipe" element={<PainelEquipe />} />
               </Route>
               <Route path="admin/*" element={<Navigate to="/painel" replace />} />
             </Routes>

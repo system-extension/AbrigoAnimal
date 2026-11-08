@@ -22,6 +22,11 @@ export async function entrar(email, senha) {
   return usuarioAtual();
 }
 
+/** Troca a senha de quem está logado. Precisa da senha atual. */
+export async function trocarSenha(senhaAtual, novaSenha) {
+  return requisicao('/api/auth/senha', { metodo: 'POST', corpo: { senhaAtual, novaSenha } });
+}
+
 export async function sair() {
   return requisicao('/api/auth/logout', { metodo: 'POST' });
 }
