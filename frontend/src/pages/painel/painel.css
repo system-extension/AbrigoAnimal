@@ -19,17 +19,6 @@
   color: var(--tinta);
   font-size: 1.1rem;
 }
-.faixa-demo {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.25rem 1rem;
-  padding: 0.5rem 1rem;
-  background: var(--amarelo-suave);
-  color: #6b5000;
-  font-size: 0.82rem;
-  font-weight: 600;
-}
 .botao-link {
   background: none;
   border: 0;
