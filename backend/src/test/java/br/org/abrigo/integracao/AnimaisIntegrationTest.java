@@ -156,6 +156,32 @@ class AnimaisIntegrationTest extends IntegracaoTest {
     }
 
     @Test
+    void respostaTrazAVersaoNovaParaOProximoSalvar() throws Exception {
+        String id = campo(cadastrarAnimalSimples("Mel"), "$.id");
+        String corpo = "{\"nome\": \"Mel\", \"especie\": \"CAO\", \"versao\": %s}";
+
+        // troca a situação e, em seguida, salva o cadastro com a versão que veio na resposta
+        String aposSituacao = mvc.perform(post("/api/animais/" + id + "/situacao").with(user(EQUIPE)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"situacao\": \"EM_TRATAMENTO\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.versao").value(1))
+                .andReturn().getResponse().getContentAsString();
+
+        String aposEditar = mvc.perform(put("/api/animais/" + id).with(user(EQUIPE)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo.formatted(campo(aposSituacao, "$.versao"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.versao").value(2))
+                .andReturn().getResponse().getContentAsString();
+
+        // a resposta do PUT também serve para o salvar seguinte (antes dava falso 409)
+        mvc.perform(put("/api/animais/" + id).with(user(EQUIPE)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo.formatted(campo(aposEditar, "$.versao"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void auditoriaRegistraQuemAlterou() throws Exception {
         String animal = cadastrarAnimalSimples("Nina");
 
