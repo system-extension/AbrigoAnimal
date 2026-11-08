@@ -68,10 +68,13 @@ responde **422** com a mensagem mostrada ao usuário; dado em formato inválido 
 
 | ID | Regra | Onde | Origem |
 |---|---|---|---|
-| RN-60 | Login individual por e-mail e senha; e-mail único (sem diferenciar maiúsculas); senha com **no mínimo 8 caracteres** | `GestaoUsuarios`, `Usuario` | RNF-03 |
+| RN-60 | Login individual por e-mail e senha; e-mail único (sem diferenciar maiúsculas); senha com **no mínimo 8 caracteres** e no máximo 72 bytes (limite do BCrypt: 72 letras sem acento) | `GestaoUsuarios`, `Usuario` | RNF-03 |
 | RN-61 | Primeiro acesso: se não houver nenhum usuário, o sistema cria o administrador a partir de `ADMIN_EMAIL`/`ADMIN_SENHA` | `AdminInicial` | — |
-| RN-62 | Usuário desativado não consegue mais entrar (uma sessão já aberta vale até expirar); ninguém pode desativar o próprio usuário. Não há perfis diferentes: toda a equipe tem o mesmo acesso | `GestaoUsuarios` | RNF-03 |
+| RN-62 | Dois perfis ([ADR 0012](adr/0012-perfil-administrador.md)): **administrador** (o primeiro usuário) e **equipe** (quem ele adiciona). Os dois usam o painel inteiro; só o administrador gerencia a equipe (adicionar, desativar, reativar, senha provisória). Usuário desativado não consegue mais entrar (uma sessão já aberta vale até expirar); ninguém desativa o próprio usuário | `SegurancaConfig`, `GestaoUsuarios` | RNF-03 |
 | RN-63 | A sessão expira após 8 horas | `application.yml` | — |
+| RN-64 | **Trocar a própria senha** exige a senha atual, e a nova precisa ser diferente | `GestaoUsuarios` | RNF-03 |
+| RN-65 | **Esqueceu a senha**: o administrador define uma senha provisória (o sistema não envia e-mail). Nem ele usa esse caminho para a própria senha (RN-64). Quem já estava logado continua até a sessão expirar | `SegurancaConfig`, `GestaoUsuarios` | RNF-03 |
+| RN-66 | Usuário desativado pode ser **reativado** (pelo administrador); ninguém é apagado (o nome fica na auditoria de quem alterou cada cadastro) | `GestaoUsuarios` | RNF-09 |
 
 ## Pontos em aberto (decidir com a ONG)
 

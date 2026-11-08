@@ -7,8 +7,9 @@ Base: `/api`. Erros no formato Problem Details: `{ title, status, detail, campos
 1. `GET /api/auth/csrf` → gera o cookie `XSRF-TOKEN`.
 2. `POST /api/auth/login` (form-urlencoded: `username`, `password`) com header `X-XSRF-TOKEN` = valor do cookie → `204`.
 3. Todo `POST/PUT/DELETE` interno envia o header `X-XSRF-TOKEN`.
-4. `GET /api/auth/me` → usuário logado (`401` se não houver sessão).
+4. `GET /api/auth/me` → usuário logado `{id, nome, email, ativo, administrador}` (`401` se não houver sessão).
 5. `POST /api/auth/logout` → `204`.
+6. `POST /api/auth/senha` `{senhaAtual, novaSenha}` → `204` (troca a própria senha; `422` se a atual não confere).
 
 ## Interna (exige login)
 
@@ -31,8 +32,11 @@ Base: `/api`. Erros no formato Problem Details: `{ title, status, detail, campos
 | POST | `/api/apadrinhamentos/{id}/tipo-apoio` | `{tipoApoio}`: AFETIVO, FINANCEIRO, AMBOS |
 | GET | `/api/solicitacoes?status&pagina&tamanho` | Caixa de solicitações |
 | POST | `/api/solicitacoes/{id}/status` | `{status, observacao?}`: NOVA, EM_CONTATO, CONCLUIDA, DESCARTADA |
-| GET/POST | `/api/usuarios` | Usuários da equipe |
-| POST | `/api/usuarios/{id}/desativar` | Desativar usuário |
+| GET | `/api/usuarios` | Usuários da equipe (por nome). **Todas as rotas `/api/usuarios` são só do administrador** (`403` para os demais) |
+| POST | `/api/usuarios` | `{nome, email, senha}` (senha de 8 a 72 caracteres; nasce com perfil equipe) |
+| POST | `/api/usuarios/{id}/desativar` | Desativar (não vale para o próprio usuário) |
+| POST | `/api/usuarios/{id}/reativar` | Reativar |
+| POST | `/api/usuarios/{id}/senha` | `{novaSenha}`: senha provisória para quem esqueceu (não vale para o próprio usuário) |
 
 ## Pública (sem login)
 

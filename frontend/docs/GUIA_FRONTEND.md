@@ -12,7 +12,8 @@ src/
 │   ├── animais.js       painel: cadastro, situação, óbito, vitrine, fotos
 │   ├── pessoas.js       painel: padrinhos (cadastro único de pessoas)
 │   ├── apadrinhamentos.js
-│   └── auth.js          login da equipe
+│   ├── usuarios.js      painel: equipe, só administrador (adicionar, desativar, senha provisória)
+│   └── auth.js          login da equipe e troca da própria senha
 ├── components/
 │   ├── layout/          cabeçalho, rodapé, layout público e do painel
 │   ├── pets/            cartão e foto do animal
@@ -44,6 +45,7 @@ Fluxo: `index.html → main.jsx → App.jsx (rotas) → página → componentes 
 | `/painel/animais/novo` e `/painel/animais/:id`        | Cadastro/edição                                                                       |
 | `/painel/solicitacoes`                                | Caixa de pedidos (Nova → Em contato → Concluída/Descartada)                           |
 | `/painel/padrinhos`                                   | Pessoas e afilhados                                                                   |
+| `/painel/equipe`                                      | Todos: trocar a própria senha. Administrador: equipe, senha provisória, desativar     |
 
 Rotas antigas do protótipo (`/home`, `/catalogo`, `/pets/:id`, `/termos`, `/admin`) redirecionam.
 

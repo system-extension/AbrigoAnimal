@@ -22,5 +22,6 @@ renumeradas por data. Correspondência: Notion 001–004 = 0001–0004; Notion 0
 | [0009](0009-videos-no-youtube.md) | Vídeos dos animais no YouTube (implementação adiada) | 30/09/2026 | escopo |
 | [0010](0010-vacinas-no-cadastro.md) | Vacinas registradas no cadastro do animal, sem gestão de vacinas | 07/11/2026 | escopo |
 | [0011](0011-fim-do-modo-demonstracao.md) | Fim do modo demonstração: todos os dados vêm do banco | 08/11/2026 | técnica |
+| [0012](0012-perfil-administrador.md) | Perfil de administrador para gerenciar a equipe | 08/11/2026 | técnica |
 
-Próxima: **0012 · hospedagem de produção (Railway)**.
+Próxima: **0013 · hospedagem de produção (Railway)**.
