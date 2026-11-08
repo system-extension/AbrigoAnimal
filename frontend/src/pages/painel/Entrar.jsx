@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/img/logo.webp';
 import { useSessao } from '../../context/Sessao';
@@ -14,6 +14,13 @@ export default function Entrar() {
   const [ver, setVer] = useState(false);
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
+
+  // A tela de login fica fora dos layouts (que já voltam ao topo ao trocar de página). Sem isto,
+  // quem vinha do rodapé do site chegava aqui com a rolagem lá embaixo e via uma área vazia.
+  // useLayoutEffect: sobe antes de desenhar, sem piscar.
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   if (usuario) return <Navigate to={state?.voltarPara || '/painel'} replace />;
 

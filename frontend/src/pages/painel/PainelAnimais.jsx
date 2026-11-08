@@ -122,16 +122,7 @@ export default function PainelAnimais() {
                     className="linha-animal-foto"
                   />
                   <span className="linha-animal-texto">
-                    <strong>
-                      {a.nome}
-                      {a.idoso && (
-                        <i
-                          className="fa-solid fa-heart ms-2"
-                          style={{ color: 'var(--laranja)', fontSize: '0.8em' }}
-                          title="Idoso"
-                        />
-                      )}
-                    </strong>
+                    <strong>{a.nome}</strong>
                     <small>
                       {rotulo(ESPECIES, a.especie)}
                       {a.idadeAnos != null ? ` · ${textoIdade(a.idadeAnos)}` : ''}
@@ -142,6 +133,7 @@ export default function PainelAnimais() {
                       <span className={`selo selo-${cor(a.situacao)}`}>
                         {rotulo(SITUACOES, a.situacao)}
                       </span>
+                      {a.idoso && <span className="selo selo-laranja">Idoso</span>}
                       {!a.visivelNaVitrine && a.situacao !== 'OBITO' && (
                         <span className="selo selo-cinza">
                           <i className="fa-solid fa-eye-slash" aria-hidden="true" /> Fora da vitrine

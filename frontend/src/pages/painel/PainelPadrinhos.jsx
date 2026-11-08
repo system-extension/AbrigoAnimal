@@ -53,6 +53,10 @@ function FichaPessoa({ pessoa, aoFechar }) {
     }
   };
 
+  // A folha só abre quando os afilhados chegam, já no tamanho final. Antes abria com o indicador
+  // de carregando e mudava de altura logo depois (encolhia em quem tem poucos afilhados).
+  if (vinculos.carregando && !vinculos.dados) return null;
+
   const ativos = (vinculos.dados ?? []).filter((v) => v.ativo);
   const antigos = (vinculos.dados ?? []).filter((v) => !v.ativo);
 
@@ -64,9 +68,7 @@ function FichaPessoa({ pessoa, aoFechar }) {
       </p>
 
       <h3 className="h6">Afilhados</h3>
-      {vinculos.carregando && !vinculos.dados ? (
-        <Carregando />
-      ) : ativos.length === 0 ? (
+      {ativos.length === 0 ? (
         <p className="texto-suave small">Nenhum afilhado ativo.</p>
       ) : (
         <ul className="list-unstyled d-grid gap-2">
