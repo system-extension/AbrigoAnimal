@@ -47,7 +47,8 @@ flowchart TB
 
 > Consequência importante: **em produção o front não pode ficar num domínio separado da API**
 > (ex.: front na Vercel e API em outro lugar). O cookie de sessão e o CSRF param de funcionar e a
-> prévia do WhatsApp deixa de existir. A Vercel serve só para demonstração (modo mock).
+> prévia do WhatsApp deixa de existir. O front não tem mais modo demonstração
+> ([ADR 0011](adr/0011-fim-do-modo-demonstracao.md)): sem a API, ele não funciona.
 
 ## 2. Stack
 
@@ -169,16 +170,16 @@ erDiagram
 ```
 frontend/src/
 ├── api/          ÚNICA camada que fala com o backend (cliente.js: cookie + CSRF + erros)
-│   └── mock/     backend falso no navegador (modo demonstração)
 ├── components/   layout, pets, painel, ui (Campos, Folha, CarregarMais...)
 ├── hooks/        useCarregar, usePaginacao, useRolagemRestaurada
 ├── pages/        publico/ (vitrine, ficha, formulários) e painel/ (equipe)
 └── styles/       tema.css: tokens do guia de design (docs/DESIGN.md)
 ```
 
-- **As telas não sabem de onde vêm os dados**: só chamam funções de `src/api/`. Cada área liga no
-  backend separadamente (`VITE_API_REAL=vitrine` ou `VITE_USAR_API=true` para tudo); sem variável,
-  tudo roda em **modo demonstração** (dados no navegador). Assim a integração é feita por partes.
+- **Todos os dados vêm do banco**, pela API ([ADR 0011](adr/0011-fim-do-modo-demonstracao.md)). As
+  telas só chamam funções de `src/api/`, nunca `fetch` direto.
+- **Listas se atualizam sozinhas**: depois de toda gravação bem-sucedida, o `cliente.js` avisa as
+  telas abertas (`EVENTO_DADOS`) e o `useCarregar` busca de novo, sem piscar a tela.
 - **Mobile-first**: a equipe cadastra pelo celular. Fotos comprimidas no aparelho (1600 px, WebP,
   sem dados de GPS) antes do envio.
 - **Listas longas** paginadas no backend; a tela soma páginas com "Carregar mais" e guarda na URL
@@ -225,7 +226,7 @@ subiu. Logs em saída padrão.
 | Hospedagem | em decisão (próxima ADR) |
 | Domínio | o `abrigoanimal.org.br` não é da ONG: registrar um novo em nome da ONG |
 | Backup automatizado | a implementar junto com a hospedagem |
-| Estágio do front no `Dockerfile` | descomentar e usar `VITE_USAR_API=true` |
+| Estágio do front no `Dockerfile` | descomentar (o build não precisa de variável) |
 | Tela de usuários e troca de senha | API pronta, falta a tela |
 | Limite de tentativas de login | a implementar |
 
@@ -237,3 +238,7 @@ Ver o [README](../README.md#rodando-localmente). Em resumo: Docker aberto e JDK 
 
 Carga das planilhas da ONG: `backend/scripts/importar_planilhas.py` (o SQL gerado fica em
 `backend/dados/`, fora do git).
+
+Dados fictícios para testar as telas (gato, óbito, adotado, oculto, padrinhos, pedidos em todos os
+status): `backend/scripts/dados-teste.sql`; para tirar, `limpar-dados-teste.sql`. Os dois mexem só
+no que tem `criado_por = 'dados-teste'`. O modo de rodar está no cabeçalho de cada arquivo.

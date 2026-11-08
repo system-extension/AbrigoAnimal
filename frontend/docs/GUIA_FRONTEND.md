@@ -5,16 +5,14 @@
 ```
 src/
 ├── api/                 ← ÚNICA camada que conhece o backend
-│   ├── config.js        VITE_API_REAL / VITE_USAR_API (demonstração × API real, por área)
-│   ├── cliente.js       fetch com cookie de sessão, CSRF e erros padronizados
+│   ├── cliente.js       fetch com cookie de sessão, CSRF, erros padronizados e aviso de "dados alterados"
 │   ├── rotulos.js       códigos do backend → textos da tela (CAO → "Cão")
 │   ├── vitrine.js       público: lista e página do animal
 │   ├── solicitacoes.js  formulário de interesse + caixa de pedidos
 │   ├── animais.js       painel: cadastro, situação, óbito, vitrine, fotos
 │   ├── pessoas.js       painel: padrinhos (cadastro único de pessoas)
 │   ├── apadrinhamentos.js
-│   ├── auth.js          login da equipe
-│   └── mock/            "backend de mentira" do modo demonstração
+│   └── auth.js          login da equipe
 ├── components/
 │   ├── layout/          cabeçalho, rodapé, layout público e do painel
 │   ├── pets/            cartão e foto do animal
@@ -75,11 +73,14 @@ O padrão visual (cores e seus papéis, tipografia, componentes e regras de uso)
 
 ## Ligando ao backend
 
-1. `frontend/.env.local` (modelo em `.env.example`): `VITE_API_REAL=vitrine` liga só o site público; `VITE_USAR_API=true` liga tudo.
-2. Backend rodando em `localhost:8080` (o Vite repassa `/api` e `/arquivos`).
-3. Criar um usuário da equipe (`ADMIN_EMAIL`/`ADMIN_SENHA` no backend).
+Não há configuração: o front sempre fala com a API ([ADR 0011](../../docs/adr/0011-fim-do-modo-demonstracao.md)).
 
-Diferenças conhecidas entre o modo demonstração e o backend atual:
+1. Backend rodando em `localhost:8080` (o Vite repassa `/api` e `/arquivos`).
+2. Usuário da equipe: o primeiro é criado a partir de `ADMIN_EMAIL`/`ADMIN_SENHA` no backend.
+3. Dados para testar as telas: `backend/scripts/dados-teste.sql` (fictícios; `limpar-dados-teste.sql` remove).
+
+Depois de toda gravação bem-sucedida, `cliente.js` dispara `EVENTO_DADOS` e o `useCarregar` de cada
+tela aberta busca de novo, sem piscar. Não é preciso chamar `recarregar()` só para atualizar a lista.
 
 | Item                                       | Situação                                                                      |
 | ------------------------------------------ | ----------------------------------------------------------------------------- |
@@ -95,5 +96,5 @@ Vacinas (ADR 0010): o cadastro registra só quais vacinas o animal tomou e a dat
 - Confirmar o **WhatsApp da ONG** em `src/utils/contato.js`.
 - Revisar o texto de **Privacidade** com a ONG.
 - Imagens geradas por IA (Rolê, Sobre) estão marcadas como "Imagem ilustrativa": trocar por fotos reais quando houver.
-- Vídeos (ADR 0009): a seção já existe na tela (início e página do animal) com **clipes de exemplo** feitos das fotos do mural. Falta o backend guardar o ID do YouTube e a rota `GET /api/public/videos`; no modo API real a seção fica escondida até lá.
+- Vídeos (ADR 0009): a seção já existe na tela (início e página do animal) e toca vídeos do YouTube. Falta o backend guardar o ID do vídeo e a rota `GET /api/public/videos`; até lá a seção fica escondida.
 - PWA (instalar como app) e testes automatizados (Vitest/Playwright).
