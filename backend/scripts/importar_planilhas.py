@@ -5,10 +5,17 @@ Carga inicial: planilhas "CONTROLE DE VACINA" da ONG -> SQL (animal + vacina_ani
 Vacinas na opção B: grava QUAIS vacinas o animal tomou e a data da última dose.
 As colunas "REVACINAR" das planilhas são ignoradas (o sistema não faz gestão de vacinas).
 
-Uso (na pasta backend/, com o banco já criado pelo Flyway, ou seja, o backend já rodou uma vez):
+Uso (com o banco já criado pelo Flyway, ou seja, o backend já rodou uma vez):
 
+    # na pasta backend/: gera o SQL
     python scripts/importar_planilhas.py "../CONTROLE DE VACINA ALA A.xlsx" ... [--vitrine]
-    docker compose exec -T postgres psql -U abrigo -d abrigo < dados/carga/carga.sql
+
+    # na raiz do repositório: copia para dentro do container e o psql lê o arquivo direto
+    docker compose cp backend/dados/carga/carga.sql postgres:/tmp/carga.sql
+    docker compose exec postgres psql -U abrigo -d abrigo -v ON_ERROR_STOP=1 -f /tmp/carga.sql
+
+    NÃO use "Get-Content carga.sql | docker ..." no PowerShell: o pipe converte o texto para
+    ASCII e todo acento vira "?" no banco ("Alemão" -> "Alem?o").
 
 Gera em dados/carga/ (pasta fora do git — dados da ONG não vão para o repositório):
   - carga.sql        idempotente: rodar de novo não duplica (ids fixos + "on conflict do nothing")
@@ -46,6 +53,8 @@ ALAS = [
 ]
 # Asilos abrigam os mais velhos (informação da ONG). A equipe ajusta caso a caso depois.
 ALAS_DE_IDOSOS = {"Asilo Osnilda", "Asilo Abrigo"}
+# As planilhas não têm a coluna, mas a ONG confirmou (nov/2026) que TODOS os animais são castrados.
+CASTRADO = True
 
 CORES = {
     "PTO": "preto", "PRET": "preto", "PRETO": "preto", "PRETA": "preto",
@@ -233,10 +242,10 @@ def main():
     ]
     for a in animais:
         linhas.append(
-            "insert into animal (id, versao, organizacao_id, nome, slug, especie, sexo, cor, chip, chip_adicional, "
+            "insert into animal (id, versao, organizacao_id, nome, slug, especie, sexo, cor, castrado, chip, chip_adicional, "
             "ala, canil, idoso, situacao, visivel_na_vitrine, criado_em, atualizado_em, criado_por, atualizado_por) "
             f"values ({sql(a['id'])}, 0, 1, {sql(a['nome'])}, {sql(slug(a['nome'], a['id']))}, 'CAO', "
-            f"{sql(a['sexo'])}, {sql(a['cor'])}, {sql(a['chip'])}, {sql(a['chip2'])}, {sql(a['ala'])}, "
+            f"{sql(a['sexo'])}, {sql(a['cor'])}, {sql(CASTRADO)}, {sql(a['chip'])}, {sql(a['chip2'])}, {sql(a['ala'])}, "
             f"{sql(a['canil'])}, {sql(a['idoso'])}, 'DISPONIVEL', {sql(args.vitrine)}, now(), now(), "
             f"'{AUTOR}', '{AUTOR}') on conflict (id) do nothing;")
         for tipo, data in a["vacinas"]:
@@ -252,6 +261,7 @@ def main():
           f"- Vacinas registradas (última dose): **{total_vacinas}**",
           f"- Vitrine: **{'publicados' if args.vitrine else 'ocultos (publicar depois de pôr foto e descrição)'}**",
           f"- Marcados como idosos (estão nos asilos): **{sum(a['idoso'] for a in animais)}** — a equipe confere",
+          "- Castrados: **todos** (confirmado pela ONG; as planilhas não têm a coluna)",
           "", "## Para a ONG conferir", "", "| Onde | Animal | O que conferir |", "|---|---|---|"]
     md += [f"| {o} | {n} | {p} |" for o, n, p in rel.itens] or ["| — | — | nada |"]
     (saida / "pendencias.md").write_text("\n".join(md) + "\n", encoding="utf-8")
