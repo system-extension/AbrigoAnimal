@@ -79,6 +79,10 @@ export default function Entrar() {
         <Link to="/" className="botao botao-texto botao-bloco mt-2">
           Voltar ao site
         </Link>
+        {/* fixo, aparece sempre: não revela se a conta existe ou foi bloqueada (ADR 0013) */}
+        <p className="texto-suave small text-center mt-3 mb-0">
+          Não consegue entrar? Fale com o administrador da equipe.
+        </p>
       </form>
     </div>
   );

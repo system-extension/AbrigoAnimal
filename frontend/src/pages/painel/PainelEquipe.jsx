@@ -101,6 +101,14 @@ export default function PainelEquipe() {
     if (ok) fecharFicha();
   };
 
+  const desbloquear = async () => {
+    const ok = await executar(
+      () => usuarios.desbloquear(aberto.id),
+      `${aberto.nome.split(' ')[0]} já pode entrar de novo`,
+    );
+    if (ok) fecharFicha();
+  };
+
   const alternarAtivo = async () => {
     const ok = await executar(
       () => (aberto.ativo ? usuarios.desativar(aberto.id) : usuarios.reativar(aberto.id)),
@@ -161,6 +169,7 @@ export default function PainelEquipe() {
                     {u.administrador && <span className="selo selo-laranja">Administrador</span>}
                     {souEu(u) && <span className="selo selo-azul">Você</span>}
                     {!u.ativo && <span className="selo selo-cinza">Desativado</span>}
+                    {u.bloqueado && <span className="selo selo-amarelo">Bloqueado</span>}
                   </span>
                 </span>
                 <small className="texto-suave">{u.email}</small>
@@ -268,6 +277,28 @@ export default function PainelEquipe() {
               {aberto.email}
               {!aberto.ativo && ' · desativado'}
             </p>
+
+            {/* bloqueado por senhas erradas (ADR 0013): sem IP nem detalhe técnico na tela */}
+            {aberto.bloqueado && (
+              <div className="d-grid gap-2 mb-4">
+                <p className="small mb-0">
+                  <span className="selo selo-amarelo me-1">Bloqueado</span>O acesso foi bloqueado
+                  depois de várias senhas erradas.
+                  {aberto.administrador &&
+                    ' Por ser administrador, só o responsável técnico do sistema pode liberar.'}
+                </p>
+                {!aberto.administrador && (
+                  <button
+                    type="button"
+                    className="botao botao-principal"
+                    onClick={desbloquear}
+                    disabled={enviando}
+                  >
+                    <i className="fa-solid fa-unlock" aria-hidden="true" /> Desbloquear
+                  </button>
+                )}
+              </div>
+            )}
 
             {aberto.ativo && (
               <form onSubmit={salvarProvisoria} noValidate className="mb-4">

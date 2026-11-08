@@ -19,6 +19,11 @@ export async function reativar(id) {
   return requisicao(`/api/usuarios/${id}/reativar`, { metodo: 'POST' });
 }
 
+/** Libera um colega barrado por senhas erradas (não vale para o administrador). */
+export async function desbloquear(id) {
+  return requisicao(`/api/usuarios/${id}/desbloquear`, { metodo: 'POST' });
+}
+
 /** Senha provisória para um colega que esqueceu a dele. A própria senha usa auth.trocarSenha. */
 export async function redefinirSenha(id, novaSenha) {
   return requisicao(`/api/usuarios/${id}/senha`, { metodo: 'POST', corpo: { novaSenha } });
