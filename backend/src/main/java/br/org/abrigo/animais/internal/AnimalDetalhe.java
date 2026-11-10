@@ -42,7 +42,9 @@ public record AnimalDetalhe(
         List<Foto> fotos,
         Instant criadoEm,
         Instant atualizadoEm,
-        String atualizadoPor) {
+        String atualizadoPor,
+        // nome da pessoa da equipe para as telas; null quando não é uma pessoa (ex.: carga inicial)
+        String atualizadoPorNome) {
 
     public record Foto(UUID id, String url, boolean principal) {
     }

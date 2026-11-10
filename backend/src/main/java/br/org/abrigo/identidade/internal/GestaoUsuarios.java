@@ -48,6 +48,12 @@ public class GestaoUsuarios {
         return todos.stream().map(u -> UsuarioResposta.de(u, bloqueados.contains(u.getEmail()))).toList();
     }
 
+    /** Nome para mostrar a colegas (aviso de presença); o e-mail se não achar o usuário. */
+    @Transactional(readOnly = true)
+    public String nomeOuEmail(String email) {
+        return usuarios.findByEmailIgnoreCase(email).map(Usuario::getNome).orElse(email);
+    }
+
     @Transactional(readOnly = true)
     public UsuarioResposta buscarPorEmail(String email) {
         return usuarios.findByEmailIgnoreCase(email)

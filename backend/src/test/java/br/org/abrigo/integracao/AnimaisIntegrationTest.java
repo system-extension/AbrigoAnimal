@@ -189,6 +189,19 @@ class AnimaisIntegrationTest extends IntegracaoTest {
     }
 
     @Test
+    void detalheTrazONomeDeQuemAlterouNaoSoOEmail() throws Exception {
+        mvc.perform(post("/api/animais").with(user("admin@teste.org")).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"nome\": \"Fubá\", \"especie\": \"CAO\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.atualizadoPor").value("admin@teste.org"))
+                .andExpect(jsonPath("$.atualizadoPorNome").value("Administrador"));
+
+        // quem não é da equipe cadastrada (ex.: carga inicial) não tem nome: a tela não mostra login técnico
+        String animal = cadastrarAnimalSimples("Canjica");
+        org.assertj.core.api.Assertions.assertThat(campo(animal, "$.atualizadoPorNome")).isNull();
+    }
+
+    @Test
     void linkCompartilhadoTemPreviaComNomeDoAnimal() throws Exception {
         String slug = campo(cadastrarAnimalSimples("Paçoca"), "$.slug");
 
