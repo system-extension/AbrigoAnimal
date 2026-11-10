@@ -18,9 +18,11 @@ src/
 │   ├── layout/          cabeçalho, rodapé, layout público e do painel
 │   ├── pets/            cartão e foto do animal
 │   ├── painel/          seletor de fotos do cadastro
-│   └── ui/              campos, chips, folha (bottom sheet), carregando, vazio
+│   └── ui/              campos, chips (TrilhoChips: setas para rolar), folha (bottom sheet), carregando, vazio
 ├── context/             sessão da equipe e avisos (toasts)
-├── hooks/useCarregar.js carregando / dados / erro de toda tela
+├── hooks/               useCarregar (carregando/dados/erro), usePaginacao, useRolagemRestaurada,
+│                        useValorAtrasado (busca só quando para de digitar),
+│                        usePresencaEdicao (aviso "fulano está editando", ADR 0014)
 ├── pages/publico/       Início, Animais, Animal, Interesse, Como ajudar, Sobre, Denúncia, Privacidade
 ├── pages/painel/        Entrar, Início, Animais, Formulário do animal, Pedidos, Padrinhos
 ├── styles/tema.css      identidade visual (cores, botões, chips, campos)

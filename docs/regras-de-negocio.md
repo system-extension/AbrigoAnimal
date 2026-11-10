@@ -24,7 +24,7 @@ responde **422** com a mensagem mostrada ao usuário; dado em formato inválido 
 | RN-09 | **Situação**: disponível, em tratamento, adotado ou óbito. Todo animal novo nasce **disponível e visível na vitrine**. Ter padrinho **não** é situação: o animal apadrinhado continua disponível para adoção | `Animal` | RF-04 |
 | RN-10 | **Óbito** só entra pelo registro de óbito (não pela troca de situação), com data obrigatória e não futura. É **estado final**: a situação não muda mais, o animal sai da vitrine e não pode voltar a ela, e não aceita novos apadrinhamentos | `Animal` | RF-04 |
 | RN-11 | **Fotos**: até 10 por animal; só JPG, PNG ou WEBP (conferido pelo conteúdo do arquivo, não pelo nome); até 3 MB (o celular já envia comprimido). A primeira foto é a principal; remover a principal promove a seguinte | `Animal`, `GestaoAnimais`, `TipoImagem` | RF-02 |
-| RN-12 | Duas pessoas editando o mesmo animal: quem salvar por último recebe aviso (**409**) em vez de apagar a alteração da outra | `GestaoAnimais` (campo `versao`) | RNF-09 |
+| RN-12 | Duas pessoas editando o mesmo animal: quem abre um cadastro já aberto vê "Fulano está editando desde HH:MM" e escolhe só visualizar ou editar mesmo assim ([ADR 0014](adr/0014-aviso-de-presenca-na-edicao.md)). Quem salvar por último recebe aviso (**409**) com o que mudou, sem perder o que digitou, e decide se salva por cima | `GestaoAnimais` (campo `versao`), `EdicoesEmAndamento`, `FormularioAnimal.jsx` | RNF-09 |
 
 ## Vitrine pública
 

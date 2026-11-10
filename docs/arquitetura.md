@@ -162,6 +162,7 @@ erDiagram
 | Senha | BCrypt com prefixo de algoritmo (`{bcrypt}...`); de 8 caracteres a 72 bytes (limite do BCrypt) |
 | Perfis | administrador (gerencia a equipe: `/api/usuarios/**` com `hasRole("ADMIN")`) e equipe ([ADR 0012](adr/0012-perfil-administrador.md)) |
 | Força bruta no login | bloqueio permanente no banco: e-mail+IP após 5 erros seguidos, IP inteiro após errar 3 e-mails em 1h; conta recusa por 15 min após 10 erros de qualquer IP; resposta e tempo iguais aos de senha errada (piso de 400 ms em toda recusa) ([ADR 0013](adr/0013-bloqueio-de-login.md)) |
+| Nomes nas telas | a auditoria grava o login (e-mail); as telas mostram o nome da pessoa, traduzido pela interface `NomesDaEquipe` (plataforma), implementada pelo módulo identidade |
 | IP do visitante | `IpDoCliente`, modo em `IP_CLIENTE_MODO`; o `X-Forwarded-For` não é aceito cegamente (`forward-headers-strategy: none`) |
 | Dados públicos | **barreira dupla**: `AnimalVitrine` (módulo animais) e `AnimalPublicoResponse` (vitrine) só têm campos públicos; o teste `ApiPublicaSemDadosSensiveisTest` falha se chip, ala, canil, CPF, telefone, e-mail ou endereço aparecerem numa rota pública |
 | Formulário público | consentimento obrigatório, campo isca contra robôs, limite de envios por IP/hora |
