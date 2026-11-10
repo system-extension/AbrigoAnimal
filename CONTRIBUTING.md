@@ -32,5 +32,5 @@
 ## Regras que não se negociam
 - **Nenhum segredo no Git.** Senhas e chaves só no `.env` (que está no `.gitignore`).
 - **Dados pessoais nunca na API pública.** Existe um teste que verifica isso: não o desative.
-- **Telas pegam dados só de `frontend/src/api/`.** É isso que permite trocar o mock pela API sem reescrever telas.
+- **Telas pegam dados só de `frontend/src/api/`.** Nada de `fetch` direto nem dado inventado na tela: tudo vem do banco ([ADR 0011](docs/adr/0011-fim-do-modo-demonstracao.md)). Para testar, use `backend/scripts/dados-teste.sql`.
 - **Regra de negócio fica no backend.** O front valida para ajudar o usuário; quem garante é o Spring.

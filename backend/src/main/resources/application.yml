@@ -41,7 +41,9 @@ spring:
 
 server:
   port: ${PORT:8080}
-  forward-headers-strategy: framework   # atrás do proxy da hospedagem: IP real e HTTPS corretos
+  # Desligado de propósito: o "framework" confiava no X-Forwarded-For que QUALQUER visitante pode
+  # forjar. O IP real é decidido em IpDoCliente (abrigo.ip-cliente abaixo, ADR 0013).
+  forward-headers-strategy: none
   servlet:
     session:
       timeout: 8h
@@ -70,6 +72,19 @@ abrigo:
     senha: ${ADMIN_SENHA:}
   solicitacoes:
     limite-por-hora: ${SOLICITACOES_LIMITE_HORA:5}
+  # De onde vem o IP do visitante (IpDoCliente). Em produção, definido depois de MEDIR o proxy
+  # do Railway (docs/producao.md). Modos: CONEXAO, X_FORWARDED_FOR_ULTIMO,
+  # X_FORWARDED_FOR_PRIMEIRO, X_REAL_IP.
+  ip-cliente:
+    modo: ${IP_CLIENTE_MODO:CONEXAO}
+    diagnostico: ${IP_CLIENTE_DIAGNOSTICO:false}  # true só durante a medição: registra os cabeçalhos
+  # Proteção do login (ADR 0013).
+  login:
+    erros-por-email: 5          # par e-mail + IP: bloqueio permanente
+    emails-por-ip: 3            # IP que erra tantos e-mails diferentes...
+    janela-emails-por-ip: 1h    # ...neste tempo: bloqueio permanente do IP
+    erros-por-conta: 10         # rede de segurança que não depende de IP: tantos erros na conta...
+    janela-erros-por-conta: 15m # ...neste tempo, vindos de qualquer lugar: recusa por este tempo
 
 logging:
   level:

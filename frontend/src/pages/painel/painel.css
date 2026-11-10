@@ -19,17 +19,6 @@
   color: var(--tinta);
   font-size: 1.1rem;
 }
-.faixa-demo {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.25rem 1rem;
-  padding: 0.5rem 1rem;
-  background: var(--amarelo-suave);
-  color: #6b5000;
-  font-size: 0.82rem;
-  font-weight: 600;
-}
 .botao-link {
   background: none;
   border: 0;
@@ -374,6 +363,35 @@
 .aviso-obito {
   background: var(--neutro-suave);
   justify-content: flex-start;
+}
+/* Aviso de presença (ADR 0014): outra pessoa com o cadastro aberto */
+.aviso-presenca {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--raio);
+  background: var(--azul-suave);
+  color: var(--azul);
+  font-weight: 600;
+}
+.aviso-presenca-discreto {
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: var(--azul);
+}
+/* fieldset só para travar os campos no "só visualizar": sem moldura própria */
+.form-campos {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.form-campos:disabled {
+  opacity: 0.75;
 }
 .sugestao {
   display: flex;

@@ -41,7 +41,7 @@ class AdminInicial implements ApplicationRunner {
             log.warn("Nenhum usuário cadastrado e ADMIN_EMAIL/ADMIN_SENHA não definidos: ninguém conseguirá entrar.");
             return;
         }
-        gestao.criar(nome, email, senha);
+        gestao.criarAdministrador(nome, email, senha);
         log.info("Usuário administrador inicial criado: {}", email);
     }
 }

@@ -1,21 +1,26 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/img/logo.webp';
 import { useSessao } from '../../context/Sessao';
 import { CampoTexto } from '../../components/ui/Campos';
-import { USAR_API_REAL } from '../../api/config';
-import { LOGIN_DEMO } from '../../api/auth';
 import './painel.css';
 
 export default function Entrar() {
   const { usuario, entrar } = useSessao();
   const navegar = useNavigate();
   const { state } = useLocation();
-  const [email, setEmail] = useState(USAR_API_REAL ? '' : LOGIN_DEMO.email);
-  const [senha, setSenha] = useState(USAR_API_REAL ? '' : LOGIN_DEMO.senha);
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
   const [ver, setVer] = useState(false);
   const [erro, setErro] = useState('');
   const [enviando, setEnviando] = useState(false);
+
+  // A tela de login fica fora dos layouts (que já voltam ao topo ao trocar de página). Sem isto,
+  // quem vinha do rodapé do site chegava aqui com a rolagem lá embaixo e via uma área vazia.
+  // useLayoutEffect: sobe antes de desenhar, sem piscar.
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   if (usuario) return <Navigate to={state?.voltarPara || '/painel'} replace />;
 
@@ -39,11 +44,6 @@ export default function Entrar() {
         <img src={logo} alt="" width="84" height="84" className="mx-auto d-block mb-2" />
         <h1 className="h4 text-center">Área da equipe</h1>
         <p className="texto-suave text-center small">Acesso para a equipe do Abrigo Animal.</p>
-        {!USAR_API_REAL && (
-          <p className="faixa-demo rounded-3 small">
-            Demonstração: os dados de acesso já estão preenchidos.
-          </p>
-        )}
         <CampoTexto
           rotulo="E-mail"
           type="email"
@@ -86,6 +86,10 @@ export default function Entrar() {
         <Link to="/" className="botao botao-texto botao-bloco mt-2">
           Voltar ao site
         </Link>
+        {/* fixo, aparece sempre: não revela se a conta existe ou foi bloqueada (ADR 0013) */}
+        <p className="texto-suave small text-center mt-3 mb-0">
+          Não consegue entrar? Fale com o administrador da equipe.
+        </p>
       </form>
     </div>
   );

@@ -45,8 +45,6 @@ jobs:
       - run: npm ci
       - name: Lint e formatação
         run: npm run lint && npm run format:check
-      # Mesmo build que vai para produção (embutido no jar): todas as áreas na API real
+      # Mesmo build que vai para produção (embutido no jar)
       - name: Build de produção
         run: npm run build
-        env:
-          VITE_USAR_API: "true"

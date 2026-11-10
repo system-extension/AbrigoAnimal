@@ -6,6 +6,7 @@ import br.org.abrigo.animais.internal.domain.Animal;
 import br.org.abrigo.animais.internal.domain.FotoAnimal;
 import br.org.abrigo.animais.internal.domain.VacinaAnimal;
 import br.org.abrigo.plataforma.ArmazenamentoArquivos;
+import br.org.abrigo.plataforma.NomesDaEquipe;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
@@ -20,10 +21,12 @@ public class MapeadorAnimal {
 
     private final ArmazenamentoArquivos armazenamento;
     private final Clock clock;
+    private final NomesDaEquipe nomes;
 
-    MapeadorAnimal(ArmazenamentoArquivos armazenamento, Clock clock) {
+    MapeadorAnimal(ArmazenamentoArquivos armazenamento, Clock clock, NomesDaEquipe nomes) {
         this.armazenamento = armazenamento;
         this.clock = clock;
+        this.nomes = nomes;
     }
 
     public AnimalResumo paraResumo(Animal a) {
@@ -60,7 +63,8 @@ public class MapeadorAnimal {
                 a.getFotos().stream()
                         .map(f -> new AnimalDetalhe.Foto(f.getId(), url(f), f.isPrincipal()))
                         .toList(),
-                a.getCriadoEm(), a.getAtualizadoEm(), a.getAtualizadoPor());
+                a.getCriadoEm(), a.getAtualizadoEm(), a.getAtualizadoPor(),
+                nomes.nomeDe(a.getAtualizadoPor()).orElse(null));
     }
 
     private String url(FotoAnimal f) {

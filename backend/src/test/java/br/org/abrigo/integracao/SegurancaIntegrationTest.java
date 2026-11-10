@@ -41,12 +41,13 @@ class SegurancaIntegrationTest extends IntegracaoTest {
 
         mvc.perform(get("/api/auth/me").session(sessao))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("admin@teste.org"));
+                .andExpect(jsonPath("$.email").value("admin@teste.org"))
+                .andExpect(jsonPath("$.administrador").value(true));
     }
 
     @Test
     void senhaErradaDa401() throws Exception {
-        mvc.perform(post("/api/auth/login").with(csrf())
+        mvc.perform(post("/api/auth/login").with(csrf()).with(ip(ipNovo()))
                         .param("username", "admin@teste.org").param("password", "errada"))
                 .andExpect(status().isUnauthorized());
     }

@@ -5,17 +5,18 @@ Base: `/api`. Erros no formato Problem Details: `{ title, status, detail, campos
 ## Autenticação (sessão com cookie)
 
 1. `GET /api/auth/csrf` → gera o cookie `XSRF-TOKEN`.
-2. `POST /api/auth/login` (form-urlencoded: `username`, `password`) com header `X-XSRF-TOKEN` = valor do cookie → `204`.
+2. `POST /api/auth/login` (form-urlencoded: `username`, `password`) com header `X-XSRF-TOKEN` = valor do cookie → `204`. Qualquer falha responde `401` sem corpo, **inclusive quando o acesso está bloqueado** por senhas erradas (ADR 0013): não há resposta diferente para "bloqueado".
 3. Todo `POST/PUT/DELETE` interno envia o header `X-XSRF-TOKEN`.
-4. `GET /api/auth/me` → usuário logado (`401` se não houver sessão).
+4. `GET /api/auth/me` → usuário logado `{id, nome, email, ativo, administrador}` (`401` se não houver sessão).
 5. `POST /api/auth/logout` → `204`.
+6. `POST /api/auth/senha` `{senhaAtual, novaSenha}` → `204` (troca a própria senha; `422` se a atual não confere).
 
 ## Interna (exige login)
 
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/api/animais?busca&especie&situacao&ala&idoso&semFoto&pagina&tamanho` | Lista paginada (padrão 20, máx. 50). `busca` procura nome e os dois chips |
-| GET | `/api/animais/{id}` | Detalhe |
+| GET | `/api/animais/{id}` | Detalhe. `atualizadoPor` é o login (auditoria); `atualizadoPorNome` é o nome da pessoa para as telas (`null` se não for alguém da equipe, ex.: carga inicial) |
 | POST | `/api/animais` | Cadastrar (corpo abaixo) |
 | PUT | `/api/animais/{id}` | Editar (enviar `versao`; `409` se alguém salvou antes) |
 | POST | `/api/animais/{id}/situacao` | `{situacao}`: DISPONIVEL, EM_TRATAMENTO, ADOTADO |
@@ -31,8 +32,14 @@ Base: `/api`. Erros no formato Problem Details: `{ title, status, detail, campos
 | POST | `/api/apadrinhamentos/{id}/tipo-apoio` | `{tipoApoio}`: AFETIVO, FINANCEIRO, AMBOS |
 | GET | `/api/solicitacoes?status&pagina&tamanho` | Caixa de solicitações |
 | POST | `/api/solicitacoes/{id}/status` | `{status, observacao?}`: NOVA, EM_CONTATO, CONCLUIDA, DESCARTADA |
-| GET/POST | `/api/usuarios` | Usuários da equipe |
-| POST | `/api/usuarios/{id}/desativar` | Desativar usuário |
+| GET | `/api/usuarios` | Usuários da equipe (por nome). **Todas as rotas `/api/usuarios` são só do administrador** (`403` para os demais) |
+| POST | `/api/usuarios` | `{nome, email, senha}` (senha de 8 a 72 caracteres; nasce com perfil equipe) |
+| POST | `/api/usuarios/{id}/desativar` | Desativar (não vale para o próprio usuário) |
+| POST | `/api/usuarios/{id}/reativar` | Reativar |
+| POST | `/api/edicoes/{tipo}/{id}` | Aviso de presença (ADR 0014): "estou editando", a cada 30 s. Devolve quem mais está editando: `[{nome, desde}]`. Some sem sinal por 2 min |
+| DELETE | `/api/edicoes/{tipo}/{id}` | Saí da edição |
+| POST | `/api/usuarios/{id}/desbloquear` | Libera quem foi bloqueado por senhas erradas, em todas as redes (`422` para o administrador). A lista traz `bloqueado: true/false` |
+| POST | `/api/usuarios/{id}/senha` | `{novaSenha}`: senha provisória para quem esqueceu (não vale para o próprio usuário) |
 
 ## Pública (sem login)
 

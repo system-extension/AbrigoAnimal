@@ -30,13 +30,14 @@ public class GestaoPessoas {
     public PessoaDetalhe cadastrar(DadosPessoa dados, boolean consentiu) {
         Pessoa nova = Pessoa.cadastrar(dados, consentiu ? Instant.now(clock) : null);
         validarCpfUnico(nova.getCpf(), null);
-        return PessoaDetalhe.de(pessoas.save(nova));
+        return PessoaDetalhe.de(pessoas.saveAndFlush(nova));
     }
 
     public PessoaDetalhe atualizar(UUID id, DadosPessoa dados) {
         Pessoa p = carregar(id);
         p.atualizar(dados);
         validarCpfUnico(p.getCpf(), id);
+        pessoas.flush(); // grava antes de responder: a resposta leva a versão nova (ver GestaoAnimais)
         return PessoaDetalhe.de(p);
     }
 

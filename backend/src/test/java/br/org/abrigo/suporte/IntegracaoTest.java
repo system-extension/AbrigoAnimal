@@ -8,8 +8,10 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -64,6 +66,22 @@ public abstract class IntegracaoTest {
                 .andExpect(status().isCreated())
                 .andReturn();
         return r.getResponse().getContentAsString();
+    }
+
+    /**
+     * Simula o IP de quem fez a requisição. Testes de login usam um IP próprio para que as senhas
+     * erradas de um teste não bloqueiem o login de outro (ADR 0013).
+     */
+    protected static RequestPostProcessor ip(String endereco) {
+        return requisicao -> {
+            requisicao.setRemoteAddr(endereco);
+            return requisicao;
+        };
+    }
+
+    protected static String ipNovo() {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        return "10." + r.nextInt(256) + "." + r.nextInt(256) + "." + r.nextInt(1, 255);
     }
 
     protected static String campo(String json, String caminho) {
