@@ -11,6 +11,7 @@
 
 /** Disparado em window depois de qualquer gravação bem-sucedida no backend. */
 export const EVENTO_DADOS = 'abrigo:dados-alterados';
+const NAO_AVISA = ['/api/auth/', '/api/edicoes/'];
 
 export class ErroApi extends Error {
   constructor(status, corpo) {
@@ -44,9 +45,10 @@ async function garantirCsrf() {
 
 /**
  * @param {string} caminho  ex.: '/api/animais'
- * @param {{metodo?: string, corpo?: object, formulario?: FormData|URLSearchParams}} opcoes
+ * @param {{metodo?: string, corpo?: object, formulario?: FormData|URLSearchParams, keepalive?: boolean}} opcoes
+ *   keepalive: a requisição sobrevive ao fechamento da página (usado para "saí da edição").
  */
-export async function requisicao(caminho, { metodo = 'GET', corpo, formulario } = {}) {
+export async function requisicao(caminho, { metodo = 'GET', corpo, formulario, keepalive } = {}) {
   const headers = { Accept: 'application/json' };
   if (corpo !== undefined) headers['Content-Type'] = 'application/json';
   if (metodo !== 'GET') {
@@ -61,14 +63,16 @@ export async function requisicao(caminho, { metodo = 'GET', corpo, formulario } 
       method: metodo,
       headers,
       credentials: 'include',
+      keepalive,
       body: formulario ?? (corpo !== undefined ? JSON.stringify(corpo) : undefined),
     });
   } catch {
     throw new ErroApi(0, { detail: 'Sem conexão. Verifique a internet e tente de novo.' });
   }
 
-  if (resposta.ok && metodo !== 'GET' && !caminho.startsWith('/api/auth/')) {
-    // login/logout ficam de fora: quem cuida da sessão é o contexto Sessao
+  if (resposta.ok && metodo !== 'GET' && !NAO_AVISA.some((p) => caminho.startsWith(p))) {
+    // login/logout: quem cuida da sessão é o contexto Sessao. Aviso de presença: é um sinal a
+    // cada 30 s que não muda dado nenhum; avisar faria todas as listas recarregarem à toa.
     window.dispatchEvent(new Event(EVENTO_DADOS));
   }
   if (resposta.status === 204) return null;

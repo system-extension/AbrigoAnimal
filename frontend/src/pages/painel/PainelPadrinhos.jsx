@@ -5,6 +5,7 @@ import * as apadrinhamentos from '../../api/apadrinhamentos';
 import * as animais from '../../api/animais';
 import { rotulo, TIPOS_APOIO } from '../../api/rotulos';
 import useCarregar from '../../hooks/useCarregar';
+import useValorAtrasado from '../../hooks/useValorAtrasado';
 import { useAvisos } from '../../context/Avisos';
 import { mascaraTelefone, dataBR } from '../../utils/formato';
 import Carregando from '../../components/ui/Carregando';
@@ -21,14 +22,15 @@ function FichaPessoa({ pessoa, aoFechar }) {
   const vinculos = useCarregar(() => apadrinhamentos.listar({ pessoaId: pessoa.id }), [pessoa.id]);
   const [vinculando, setVinculando] = useState(false);
   const [busca, setBusca] = useState('');
+  const buscaAnimal = useValorAtrasado(busca.trim());
   const [escolhido, setEscolhido] = useState(null);
   const [tipo, setTipo] = useState('AFETIVO');
   const opcoes = useCarregar(
     () =>
       vinculando
-        ? animais.listar({ busca: busca || undefined, tamanho: 20 })
+        ? animais.listar({ busca: buscaAnimal || undefined, tamanho: 20 })
         : Promise.resolve(null),
-    [vinculando, busca],
+    [vinculando, buscaAnimal],
   );
 
   const vincular = async () => {
@@ -192,7 +194,8 @@ export default function PainelPadrinhos() {
       : null,
   );
   const [erros, setErros] = useState({});
-  const lista = useCarregar(() => pessoas.listar({ busca: busca.trim() || undefined }), [busca]);
+  const buscaAtiva = useValorAtrasado(busca.trim()); // consulta só quando para de digitar
+  const lista = useCarregar(() => pessoas.listar({ busca: buscaAtiva || undefined }), [buscaAtiva]);
 
   useEffect(() => {
     if (params.get('novo')) setParams({}, { replace: true });

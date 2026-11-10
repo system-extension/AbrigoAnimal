@@ -21,7 +21,9 @@ import { CampoTexto, GrupoChips, Interruptor } from '../../components/ui/Campos'
 import SeletorFotos from '../../components/painel/SeletorFotos';
 import Carregando from '../../components/ui/Carregando';
 import Folha from '../../components/ui/Folha';
+import TrilhoChips from '../../components/ui/TrilhoChips';
 import { useAvisos } from '../../context/Avisos';
+import usePresencaEdicao from '../../hooks/usePresencaEdicao';
 import { novoId } from '../../utils/id';
 import './painel.css';
 
@@ -57,6 +59,36 @@ function vacinasMarcadas(atuais, tipos) {
 }
 
 const hoje = () => new Date().toISOString().slice(0, 10);
+const hora = (instante) =>
+  new Date(instante).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+/** Campos que a outra pessoa mudou (conflito 409), para dizer "mudou: Descrição, Vacinas". */
+const CAMPOS_CONFLITO = [
+  ['nome', 'Nome'],
+  ['especie', 'Espécie'],
+  ['sexo', 'Sexo'],
+  ['dataNascimentoEstimada', 'Idade'],
+  ['idoso', 'Idoso'],
+  ['porte', 'Porte'],
+  ['cor', 'Cor'],
+  ['castrado', 'Castrado'],
+  ['medicacoes', 'Medicações'],
+  ['condicoesSaude', 'Condições de saúde'],
+  ['vacinas', 'Vacinas'],
+  ['temperamento', 'Temperamento'],
+  ['descricao', 'História'],
+  ['ala', 'Ala'],
+  ['canil', 'Canil'],
+  ['chip', 'Chip'],
+  ['chipAdicional', 'Segundo chip'],
+  ['visivelNaVitrine', 'Vitrine'],
+  ['situacao', 'Situação'],
+];
+function camposAlterados(antes, depois) {
+  return CAMPOS_CONFLITO.filter(
+    ([campo]) => JSON.stringify(antes?.[campo] ?? null) !== JSON.stringify(depois?.[campo] ?? null),
+  ).map(([, nome]) => nome);
+}
 
 /** Estado da tela → corpo que o backend espera (AnimalRequest). */
 function paraApi(f, original) {
@@ -132,6 +164,12 @@ export default function FormularioAnimal() {
     }
   });
   const [alterado, setAlterado] = useState(false);
+  // Aviso de presença (ADR 0014): outra pessoa com este cadastro aberto
+  const [somenteLeitura, setSomenteLeitura] = useState(false);
+  const [decidiuEditar, setDecidiuEditar] = useState(false);
+  const outros = usePresencaEdicao('animal', id, editando && !carregando && !somenteLeitura);
+  // Conflito 409: alguém salvou antes. Guarda a versão atual do servidor; a digitação fica na tela.
+  const [conflito, setConflito] = useState(null);
 
   const mudar = (campo, valor) => {
     setAlterado(true);
@@ -275,7 +313,8 @@ export default function FormularioAnimal() {
   };
 
   /* ------------------------------ Salvar ----------------------------- */
-  const salvar = async (ev) => {
+  /** base: a versão sobre a qual salvar (no "salvar por cima" é a versão que a outra pessoa gravou). */
+  const salvar = async (ev, base = original) => {
     ev?.preventDefault();
     const e = {};
     if (!f.nome.trim()) e.nome = 'Informe o nome';
@@ -289,7 +328,7 @@ export default function FormularioAnimal() {
     setSalvando(true);
     try {
       if (editando) {
-        const a = await api.editar(id, paraApi(f, original));
+        const a = await api.editar(id, paraApi(f, base));
         if (a.visivelNaVitrine !== f.visivelNaVitrine)
           await api.definirVitrine(id, f.visivelNaVitrine);
         setAlterado(false);
@@ -310,12 +349,37 @@ export default function FormularioAnimal() {
       setAlterado(false);
       setCriado(a);
     } catch (err) {
-      setErros(err.campos || {});
-      avisar.erro(err.message);
-      if (err.status === 409) aplicarAnimal(await api.buscar(id));
+      if (err.status === 409 && editando) {
+        // Não recarrega o formulário: o que a pessoa digitou continua na tela e ela decide.
+        const atual = await api.buscar(id).catch(() => null);
+        setConflito({ atual, mudou: atual ? camposAlterados(base, atual) : [] });
+      } else {
+        setErros(err.campos || {});
+        avisar.erro(err.message);
+      }
     } finally {
       setSalvando(false);
     }
+  };
+
+  const salvarPorCima = () => {
+    const { atual } = conflito;
+    setOriginal(atual);
+    setConflito(null);
+    salvar(null, atual);
+  };
+
+  const descartarMinhas = () => {
+    aplicarAnimal(conflito.atual);
+    setAlterado(false);
+    setConflito(null);
+    avisar.info('Pronto: agora a tela mostra o que a outra pessoa salvou.');
+  };
+
+  /** Fechar a folha sem escolher: revisa na tela; o próximo "Salvar" grava por cima, consciente. */
+  const revisarAntes = () => {
+    if (conflito.atual) setOriginal(conflito.atual);
+    setConflito(null);
   };
 
   const novoCadastro = () => {
@@ -353,6 +417,8 @@ export default function FormularioAnimal() {
   if (carregando) return <Carregando texto="Abrindo cadastro…" />;
 
   const emObito = original?.situacao === 'OBITO';
+  // nome de quem salvou no conflito (nunca o e-mail)
+  const quemSalvou = conflito?.atual?.atualizadoPorNome || 'Outra pessoa da equipe';
   const artigo = f.sexo === 'FEMEA' ? 'a' : 'o';
 
   return (
@@ -421,7 +487,58 @@ export default function FormularioAnimal() {
         </div>
       )}
 
-      <nav className="form-atalhos chips chips-rolagem" aria-label="Seções do cadastro">
+      {outros.length > 0 && !decidiuEditar && !alterado && (
+        <div className="aviso-presenca" role="alert">
+          <span>
+            <i className="fa-solid fa-user-pen" aria-hidden="true" />{' '}
+            <strong>{outros[0].nome}</strong> está editando este cadastro desde{' '}
+            {hora(outros[0].desde)}
+            {outros.length > 1 && ` (e mais ${outros.length - 1})`}.
+          </span>
+          <div className="d-flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="botao botao-principal"
+              onClick={() => setSomenteLeitura(true)}
+            >
+              Só visualizar
+            </button>
+            <button
+              type="button"
+              className="botao botao-contorno"
+              onClick={() => setDecidiuEditar(true)}
+            >
+              Editar mesmo assim
+            </button>
+          </div>
+        </div>
+      )}
+      {outros.length > 0 && (decidiuEditar || alterado) && (
+        <p className="aviso-presenca-discreto" role="status">
+          <i className="fa-solid fa-user-pen" aria-hidden="true" />{' '}
+          {outros.map((o) => o.nome).join(', ')} também {outros.length > 1 ? 'estão' : 'está'} com
+          este cadastro aberto. Se as duas pessoas salvarem, o sistema avisa.
+        </p>
+      )}
+      {somenteLeitura && (
+        <div className="aviso-presenca">
+          <span>
+            <i className="fa-solid fa-eye" aria-hidden="true" /> Você está só visualizando.
+          </span>
+          <button
+            type="button"
+            className="botao botao-contorno"
+            onClick={() => {
+              setSomenteLeitura(false);
+              setDecidiuEditar(true);
+            }}
+          >
+            Editar mesmo assim
+          </button>
+        </div>
+      )}
+
+      <TrilhoChips as="nav" className="form-atalhos" aria-label="Seções do cadastro">
         {[
           ['fotos', 'Fotos'],
           ['basico', 'Básico'],
@@ -434,329 +551,355 @@ export default function FormularioAnimal() {
             {nome}
           </a>
         ))}
-      </nav>
+      </TrilhoChips>
 
-      <Secao id="fotos" icone="fa-camera" titulo="Fotos" descricao="A primeira aparece na vitrine">
-        <SeletorFotos
-          fotos={fotos}
-          aoAdicionar={adicionarFotos}
-          aoRemover={removerFoto}
-          aoTornarPrincipal={tornarPrincipal}
-          ocupado={ocupadoFotos || salvando}
-        />
-      </Secao>
+      {/* "Só visualizar": um fieldset desligado trava todos os campos e botões de uma vez */}
+      <fieldset className="form-campos" disabled={somenteLeitura}>
+        <Secao
+          id="fotos"
+          icone="fa-camera"
+          titulo="Fotos"
+          descricao="A primeira aparece na vitrine"
+        >
+          <SeletorFotos
+            fotos={fotos}
+            aoAdicionar={adicionarFotos}
+            aoRemover={removerFoto}
+            aoTornarPrincipal={tornarPrincipal}
+            ocupado={ocupadoFotos || salvando}
+          />
+        </Secao>
 
-      <Secao id="basico" icone="fa-id-card" titulo="Básico">
-        <CampoTexto
-          rotulo="Nome"
-          obrigatorio
-          value={f.nome}
-          onChange={texto('nome')}
-          erro={erros.nome}
-          maxLength={120}
-          autoCapitalize="words"
-          enterKeyHint="next"
-          placeholder="Ex.: Thor"
-        />
-        <GrupoChips
-          rotulo="Espécie *"
-          opcoes={ESPECIES}
-          valor={f.especie}
-          aoMudar={(v) => v && mudar('especie', v)}
-          erro={erros.especie}
-        />
-        <GrupoChips rotulo="Sexo" opcoes={SEXOS} valor={f.sexo} aoMudar={(v) => mudar('sexo', v)} />
+        <Secao id="basico" icone="fa-id-card" titulo="Básico">
+          <CampoTexto
+            rotulo="Nome"
+            obrigatorio
+            value={f.nome}
+            onChange={texto('nome')}
+            erro={erros.nome}
+            maxLength={120}
+            autoCapitalize="words"
+            enterKeyHint="next"
+            placeholder="Ex.: Thor"
+          />
+          <GrupoChips
+            rotulo="Espécie *"
+            opcoes={ESPECIES}
+            valor={f.especie}
+            aoMudar={(v) => v && mudar('especie', v)}
+            erro={erros.especie}
+          />
+          <GrupoChips
+            rotulo="Sexo"
+            opcoes={SEXOS}
+            valor={f.sexo}
+            aoMudar={(v) => mudar('sexo', v)}
+          />
 
-        <div className="campo">
-          <span className="campo-rotulo">Idade aproximada</span>
-          <div className="contador">
-            <button
-              type="button"
-              className="botao botao-contorno botao-icone"
-              aria-label="Diminuir idade"
-              onClick={() =>
-                mudar('idadeAnos', f.idadeAnos === null ? 0 : Math.max(0, f.idadeAnos - 1))
-              }
-            >
-              <i className="fa-solid fa-minus" aria-hidden="true" />
-            </button>
-            <output aria-live="polite">
-              {f.idadeAnos === null
-                ? 'Não sei'
-                : f.idadeAnos === 0
-                  ? 'Filhote'
-                  : `${f.idadeAnos} ${f.idadeAnos === 1 ? 'ano' : 'anos'}`}
-            </output>
-            <button
-              type="button"
-              className="botao botao-contorno botao-icone"
-              aria-label="Aumentar idade"
-              onClick={() =>
-                mudar('idadeAnos', f.idadeAnos === null ? 1 : Math.min(30, f.idadeAnos + 1))
-              }
-            >
-              <i className="fa-solid fa-plus" aria-hidden="true" />
-            </button>
-            {f.idadeAnos !== null && (
+          <div className="campo">
+            <span className="campo-rotulo">Idade aproximada</span>
+            <div className="contador">
               <button
                 type="button"
-                className="botao botao-texto"
-                onClick={() => mudar('idadeAnos', null)}
+                className="botao botao-contorno botao-icone"
+                aria-label="Diminuir idade"
+                onClick={() =>
+                  mudar('idadeAnos', f.idadeAnos === null ? 0 : Math.max(0, f.idadeAnos - 1))
+                }
               >
-                Não sei
+                <i className="fa-solid fa-minus" aria-hidden="true" />
+              </button>
+              <output aria-live="polite">
+                {f.idadeAnos === null
+                  ? 'Não sei'
+                  : f.idadeAnos === 0
+                    ? 'Filhote'
+                    : `${f.idadeAnos} ${f.idadeAnos === 1 ? 'ano' : 'anos'}`}
+              </output>
+              <button
+                type="button"
+                className="botao botao-contorno botao-icone"
+                aria-label="Aumentar idade"
+                onClick={() =>
+                  mudar('idadeAnos', f.idadeAnos === null ? 1 : Math.min(30, f.idadeAnos + 1))
+                }
+              >
+                <i className="fa-solid fa-plus" aria-hidden="true" />
+              </button>
+              {f.idadeAnos !== null && (
+                <button
+                  type="button"
+                  className="botao botao-texto"
+                  onClick={() => mudar('idadeAnos', null)}
+                >
+                  Não sei
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="cartao-interno">
+            <Interruptor
+              titulo={`Idos${artigo}`}
+              descricao="Ganha destaque na vitrine e na busca por padrinhos"
+              marcado={f.idoso}
+              aoMudar={(v) => mudar('idoso', v)}
+            />
+            {sugerirIdoso && (
+              <button type="button" className="sugestao" onClick={() => mudar('idoso', true)}>
+                <i className="fa-solid fa-lightbulb" aria-hidden="true" /> Com {f.idadeAnos} anos,
+                marcar como idos{artigo}?
               </button>
             )}
           </div>
-        </div>
 
-        <div className="cartao-interno">
-          <Interruptor
-            titulo={`Idos${artigo}`}
-            descricao="Ganha destaque na vitrine e na busca por padrinhos"
-            marcado={f.idoso}
-            aoMudar={(v) => mudar('idoso', v)}
+          <GrupoChips
+            rotulo="Porte"
+            opcoes={PORTES}
+            valor={f.porte}
+            aoMudar={(v) => mudar('porte', v)}
+            dica={f.especie === 'GATO' ? 'Opcional para gatos' : undefined}
           />
-          {sugerirIdoso && (
-            <button type="button" className="sugestao" onClick={() => mudar('idoso', true)}>
-              <i className="fa-solid fa-lightbulb" aria-hidden="true" /> Com {f.idadeAnos} anos,
-              marcar como idos{artigo}?
-            </button>
-          )}
-        </div>
-
-        <GrupoChips
-          rotulo="Porte"
-          opcoes={PORTES}
-          valor={f.porte}
-          aoMudar={(v) => mudar('porte', v)}
-          dica={f.especie === 'GATO' ? 'Opcional para gatos' : undefined}
-        />
-        <CampoTexto
-          rotulo="Cor"
-          value={f.cor}
-          onChange={texto('cor')}
-          maxLength={80}
-          list="cores-comuns"
-          placeholder="Ex.: Caramelo"
-        />
-        <datalist id="cores-comuns">
-          {CORES_COMUNS.map((c) => (
-            <option key={c} value={c} />
-          ))}
-        </datalist>
-      </Secao>
-
-      <Secao
-        id="saude"
-        icone="fa-stethoscope"
-        titulo="Saúde"
-        descricao="Aparece na vitrine. Não é prontuário: só o resumo."
-      >
-        <div className="cartao-interno mb-3">
-          <Interruptor
-            titulo="Usa medicação contínua"
-            marcado={f.medicacaoContinua}
-            aoMudar={(v) => mudar('medicacaoContinua', v)}
-          />
-        </div>
-        {f.medicacaoContinua && (
           <CampoTexto
-            rotulo="Quais medicações?"
+            rotulo="Cor"
+            value={f.cor}
+            onChange={texto('cor')}
+            maxLength={80}
+            list="cores-comuns"
+            placeholder="Ex.: Caramelo"
+          />
+          <datalist id="cores-comuns">
+            {CORES_COMUNS.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+        </Secao>
+
+        <Secao
+          id="saude"
+          icone="fa-stethoscope"
+          titulo="Saúde"
+          descricao="Aparece na vitrine. Não é prontuário: só o resumo."
+        >
+          <div className="cartao-interno mb-3">
+            <Interruptor
+              titulo="Usa medicação contínua"
+              marcado={f.medicacaoContinua}
+              aoMudar={(v) => mudar('medicacaoContinua', v)}
+            />
+          </div>
+          {f.medicacaoContinua && (
+            <CampoTexto
+              rotulo="Quais medicações?"
+              multilinha
+              rows={2}
+              value={f.medicacoes}
+              onChange={texto('medicacoes')}
+              maxLength={5000}
+              placeholder="Ex.: Remédio para o coração, 2x ao dia"
+            />
+          )}
+          <GrupoChips
+            rotulo={f.sexo === 'FEMEA' ? 'Castrada?' : 'Castrado?'}
+            dica="Deixe sem marcar se ainda não sabe."
+            opcoes={CASTRADO}
+            valor={f.castrado}
+            aoMudar={(v) => mudar('castrado', v)}
+          />
+          <GrupoChips
+            rotulo="Vacinas tomadas"
+            dica="Só registra o que já tomou. A data é opcional."
+            multipla
+            opcoes={VACINAS}
+            valor={f.vacinas.map((v) => v.tipo)}
+            aoMudar={(tipos) => mudar('vacinas', vacinasMarcadas(f.vacinas, tipos))}
+          />
+          {f.vacinas.length > 0 && (
+            <div className="vacinas-datas">
+              {f.vacinas.map((v) => (
+                <CampoTexto
+                  key={v.tipo}
+                  rotulo={`${rotulo(VACINAS, v.tipo)}: última dose`}
+                  type="date"
+                  max={hoje()}
+                  value={v.ultimaDose}
+                  onChange={(e) =>
+                    mudar(
+                      'vacinas',
+                      f.vacinas.map((x) =>
+                        x.tipo === v.tipo ? { ...x, ultimaDose: e.target.value } : x,
+                      ),
+                    )
+                  }
+                />
+              ))}
+            </div>
+          )}
+          <CampoTexto
+            rotulo="Condições e cuidados"
             multilinha
             rows={2}
-            value={f.medicacoes}
-            onChange={texto('medicacoes')}
+            value={f.condicoesSaude}
+            onChange={texto('condicoesSaude')}
             maxLength={5000}
-            placeholder="Ex.: Remédio para o coração, 2x ao dia"
+            placeholder="Ex.: Artrose leve, prefere caminhadas curtas"
           />
-        )}
-        <GrupoChips
-          rotulo={f.sexo === 'FEMEA' ? 'Castrada?' : 'Castrado?'}
-          dica="Deixe sem marcar se ainda não sabe."
-          opcoes={CASTRADO}
-          valor={f.castrado}
-          aoMudar={(v) => mudar('castrado', v)}
-        />
-        <GrupoChips
-          rotulo="Vacinas tomadas"
-          dica="Só registra o que já tomou. A data é opcional."
-          multipla
-          opcoes={VACINAS}
-          valor={f.vacinas.map((v) => v.tipo)}
-          aoMudar={(tipos) => mudar('vacinas', vacinasMarcadas(f.vacinas, tipos))}
-        />
-        {f.vacinas.length > 0 && (
-          <div className="vacinas-datas">
-            {f.vacinas.map((v) => (
-              <CampoTexto
-                key={v.tipo}
-                rotulo={`${rotulo(VACINAS, v.tipo)}: última dose`}
-                type="date"
-                max={hoje()}
-                value={v.ultimaDose}
-                onChange={(e) =>
-                  mudar(
-                    'vacinas',
-                    f.vacinas.map((x) =>
-                      x.tipo === v.tipo ? { ...x, ultimaDose: e.target.value } : x,
-                    ),
-                  )
-                }
-              />
-            ))}
-          </div>
-        )}
-        <CampoTexto
-          rotulo="Condições e cuidados"
-          multilinha
-          rows={2}
-          value={f.condicoesSaude}
-          onChange={texto('condicoesSaude')}
-          maxLength={5000}
-          placeholder="Ex.: Artrose leve, prefere caminhadas curtas"
-        />
-      </Secao>
-
-      <Secao
-        id="historia"
-        icone="fa-heart"
-        titulo="História e jeito"
-        descricao="É o que convence alguém a ajudar"
-      >
-        <GrupoChips
-          rotulo="Temperamento"
-          multipla
-          opcoes={TEMPERAMENTOS}
-          valor={f.temperamento}
-          aoMudar={(v) => mudar('temperamento', v)}
-        />
-        <CampoTexto
-          rotulo="Conte sobre ele(a)"
-          dica="Do que gosta, como se comporta, há quanto tempo está no abrigo. Use o microfone do teclado para ditar."
-          multilinha
-          rows={5}
-          value={f.descricao}
-          onChange={texto('descricao')}
-          maxLength={5000}
-        />
-        <p className="campo-dica text-end mt-n2">{f.descricao.length}/5000</p>
-      </Secao>
-
-      <Secao
-        id="abrigo"
-        icone="fa-house-chimney"
-        titulo="No abrigo"
-        descricao="Uso interno: não aparece na vitrine"
-      >
-        <GrupoChips
-          rotulo="Ala"
-          opcoes={ALAS}
-          valor={f.ala}
-          aoMudar={(v) => mudar('ala', v)}
-          rolagem
-        />
-        <div className="row g-2">
-          <div className="col-5">
-            <CampoTexto
-              rotulo="Canil"
-              value={f.canil}
-              onChange={texto('canil')}
-              maxLength={40}
-              placeholder="Ex.: 14A, Solto A"
-            />
-          </div>
-          <div className="col-7">
-            <CampoTexto
-              rotulo="Nº do chip"
-              value={f.chip}
-              onChange={texto('chip')}
-              erro={erros.chip}
-              maxLength={40}
-              inputMode="numeric"
-            />
-          </div>
-        </div>
-        <CampoTexto
-          rotulo="Segundo chip (opcional)"
-          dica="Quando o primeiro parou de ler e outro foi aplicado."
-          value={f.chipAdicional}
-          onChange={texto('chipAdicional')}
-          maxLength={40}
-          inputMode="numeric"
-        />
-        <div className="cartao-interno">
-          <Interruptor
-            titulo="Mostrar na vitrine"
-            descricao={
-              emObito ? 'Indisponível após óbito' : 'Desligue para esconder do site público'
-            }
-            marcado={f.visivelNaVitrine && !emObito}
-            aoMudar={(v) => !emObito && mudar('visivelNaVitrine', v)}
-          />
-        </div>
-      </Secao>
-
-      {editando && (
-        <Secao
-          id="situacao"
-          icone="fa-signal"
-          titulo="Situação"
-          descricao="Muda na hora, sem precisar salvar"
-        >
-          {emObito ? (
-            <p className="mb-0 texto-suave">Óbito é definitivo: a situação não muda mais.</p>
-          ) : (
-            <>
-              <GrupoChips
-                rotulo="Situação atual"
-                opcoes={SITUACOES.filter((s) => s.valor !== 'OBITO')}
-                valor={original.situacao}
-                aoMudar={mudarSituacao}
-              />
-              <button
-                type="button"
-                className="botao botao-perigo botao-bloco"
-                onClick={() => setFolhaObito(true)}
-              >
-                <i className="fa-solid fa-dove" aria-hidden="true" /> Registrar óbito
-              </button>
-            </>
-          )}
-          <h3 className="h6 mt-4">Padrinhos e madrinhas</h3>
-          {padrinhos.filter((p) => p.ativo).length === 0 ? (
-            <p className="texto-suave small mb-0">Ninguém ainda. Vincule pela tela Padrinhos.</p>
-          ) : (
-            <ul className="list-unstyled d-grid gap-2 mb-0">
-              {padrinhos
-                .filter((p) => p.ativo)
-                .map((p) => (
-                  <li key={p.id} className="d-flex justify-content-between">
-                    <span>{p.pessoaNome}</span>
-                    <span className="selo selo-verde">{rotulo(TIPOS_APOIO, p.tipoApoio)}</span>
-                  </li>
-                ))}
-            </ul>
-          )}
-          {original?.atualizadoPor && (
-            <p className="campo-dica mt-3 mb-0">
-              Última alteração por {original.atualizadoPor}
-              {original.atualizadoEm
-                ? ` em ${new Date(original.atualizadoEm).toLocaleString('pt-BR')}`
-                : ''}
-              .
-            </p>
-          )}
         </Secao>
-      )}
+
+        <Secao
+          id="historia"
+          icone="fa-heart"
+          titulo="História e jeito"
+          descricao="É o que convence alguém a ajudar"
+        >
+          <GrupoChips
+            rotulo="Temperamento"
+            multipla
+            opcoes={TEMPERAMENTOS}
+            valor={f.temperamento}
+            aoMudar={(v) => mudar('temperamento', v)}
+          />
+          <CampoTexto
+            rotulo="Conte sobre ele(a)"
+            dica="Do que gosta, como se comporta, há quanto tempo está no abrigo. Use o microfone do teclado para ditar."
+            multilinha
+            rows={5}
+            value={f.descricao}
+            onChange={texto('descricao')}
+            maxLength={5000}
+          />
+          <p className="campo-dica text-end mt-n2">{f.descricao.length}/5000</p>
+        </Secao>
+
+        <Secao
+          id="abrigo"
+          icone="fa-house-chimney"
+          titulo="No abrigo"
+          descricao="Uso interno: não aparece na vitrine"
+        >
+          <GrupoChips
+            rotulo="Ala"
+            opcoes={ALAS}
+            valor={f.ala}
+            aoMudar={(v) => mudar('ala', v)}
+            rolagem
+          />
+          <div className="row g-2">
+            <div className="col-5">
+              <CampoTexto
+                rotulo="Canil"
+                value={f.canil}
+                onChange={texto('canil')}
+                maxLength={40}
+                placeholder="Ex.: 14A, Solto A"
+              />
+            </div>
+            <div className="col-7">
+              <CampoTexto
+                rotulo="Nº do chip"
+                value={f.chip}
+                onChange={texto('chip')}
+                erro={erros.chip}
+                maxLength={40}
+                inputMode="numeric"
+              />
+            </div>
+          </div>
+          <CampoTexto
+            rotulo="Segundo chip (opcional)"
+            dica="Quando o primeiro parou de ler e outro foi aplicado."
+            value={f.chipAdicional}
+            onChange={texto('chipAdicional')}
+            maxLength={40}
+            inputMode="numeric"
+          />
+          <div className="cartao-interno">
+            <Interruptor
+              titulo="Mostrar na vitrine"
+              descricao={
+                emObito ? 'Indisponível após óbito' : 'Desligue para esconder do site público'
+              }
+              marcado={f.visivelNaVitrine && !emObito}
+              aoMudar={(v) => !emObito && mudar('visivelNaVitrine', v)}
+            />
+          </div>
+        </Secao>
+
+        {editando && (
+          <Secao
+            id="situacao"
+            icone="fa-signal"
+            titulo="Situação"
+            descricao="Muda na hora, sem precisar salvar"
+          >
+            {emObito ? (
+              <p className="mb-0 texto-suave">Óbito é definitivo: a situação não muda mais.</p>
+            ) : (
+              <>
+                <GrupoChips
+                  rotulo="Situação atual"
+                  opcoes={SITUACOES.filter((s) => s.valor !== 'OBITO')}
+                  valor={original.situacao}
+                  aoMudar={mudarSituacao}
+                />
+                <button
+                  type="button"
+                  className="botao botao-perigo botao-bloco"
+                  onClick={() => setFolhaObito(true)}
+                >
+                  <i className="fa-solid fa-dove" aria-hidden="true" /> Registrar óbito
+                </button>
+              </>
+            )}
+            <h3 className="h6 mt-4">Padrinhos e madrinhas</h3>
+            {padrinhos.filter((p) => p.ativo).length === 0 ? (
+              <p className="texto-suave small mb-0">
+                {padrinhos.length === 0
+                  ? 'Ninguém ainda. Vincule pela tela Padrinhos.'
+                  : 'Nenhum padrinho no momento. Vincule pela tela Padrinhos.'}
+              </p>
+            ) : (
+              <ul className="list-unstyled d-grid gap-2 mb-0">
+                {padrinhos
+                  .filter((p) => p.ativo)
+                  .map((p) => (
+                    <li key={p.id} className="d-flex justify-content-between">
+                      <span>{p.pessoaNome}</span>
+                      <span className="selo selo-verde">{rotulo(TIPOS_APOIO, p.tipoApoio)}</span>
+                    </li>
+                  ))}
+              </ul>
+            )}
+            {padrinhos.some((p) => !p.ativo) && (
+              <p className="campo-dica mt-2 mb-0">
+                Já apadrinharam:{' '}
+                {padrinhos
+                  .filter((p) => !p.ativo)
+                  .map((p) => p.pessoaNome)
+                  .join(', ')}
+                .
+              </p>
+            )}
+            {original?.atualizadoEm && (
+              <p className="campo-dica mt-3 mb-0">
+                {/* só o nome da pessoa: o login (e-mail) não aparece para a equipe */}
+                Última alteração
+                {original.atualizadoPorNome ? ` por ${original.atualizadoPorNome}` : ''} em{' '}
+                {new Date(original.atualizadoEm).toLocaleString('pt-BR')}.
+              </p>
+            )}
+          </Secao>
+        )}
+      </fieldset>
 
       <div className="barra-salvar">
         <Link to="/painel/animais" className="botao botao-contorno">
-          Cancelar
+          {somenteLeitura ? 'Voltar' : 'Cancelar'}
         </Link>
         <button
           type="submit"
           className="botao botao-principal botao-grande"
-          disabled={salvando || ocupadoFotos}
+          disabled={salvando || ocupadoFotos || somenteLeitura}
         >
           {salvando ? (
             <>
@@ -807,6 +950,48 @@ export default function FormularioAnimal() {
               </Link>
             </div>
           </div>
+        )}
+      </Folha>
+
+      <Folha
+        aberta={Boolean(conflito)}
+        aoFechar={revisarAntes}
+        titulo="Outra pessoa salvou este cadastro"
+      >
+        {conflito && (
+          <>
+            <p>
+              <strong>{quemSalvou}</strong> salvou
+              {conflito.atual ? ` às ${hora(conflito.atual.atualizadoEm)}` : ''}, enquanto você
+              editava. <strong>O que você escreveu ainda está na tela.</strong>
+            </p>
+            {conflito.mudou.length > 0 && (
+              <p className="small">
+                O que mudou: <strong>{conflito.mudou.join(', ')}</strong>.
+              </p>
+            )}
+            <div className="d-grid gap-2">
+              {conflito.atual && (
+                <button
+                  type="button"
+                  className="botao botao-principal botao-grande"
+                  onClick={salvarPorCima}
+                >
+                  Ficar com o que eu fiz
+                </button>
+              )}
+              {conflito.atual && (
+                <button type="button" className="botao botao-contorno" onClick={descartarMinhas}>
+                  {conflito.atual.atualizadoPorNome
+                    ? `Ficar com o que ${conflito.atual.atualizadoPorNome} salvou`
+                    : 'Ficar com o que foi salvo'}
+                </button>
+              )}
+              <button type="button" className="botao botao-texto" onClick={revisarAntes}>
+                Voltar e conferir
+              </button>
+            </div>
+          </>
         )}
       </Folha>
 

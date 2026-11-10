@@ -4,10 +4,12 @@ import * as api from '../../api/animais';
 import { ESPECIES, rotulo, SITUACOES, textoIdade } from '../../api/rotulos';
 import usePaginacao from '../../hooks/usePaginacao';
 import useRolagemRestaurada from '../../hooks/useRolagemRestaurada';
+import useValorAtrasado from '../../hooks/useValorAtrasado';
 import FotoAnimal from '../../components/pets/FotoAnimal';
 import Carregando from '../../components/ui/Carregando';
 import Vazio from '../../components/ui/Vazio';
 import CarregarMais from '../../components/ui/CarregarMais';
+import TrilhoChips from '../../components/ui/TrilhoChips';
 
 const FILTROS = [
   { rotulo: 'Todos', params: {} },
@@ -28,12 +30,14 @@ const cor = (s) => SITUACOES.find((x) => x.valor === s)?.cor ?? 'cinza';
 export default function PainelAnimais() {
   const [params, setParams] = useSearchParams();
   const [busca, setBusca] = useState('');
+  // consulta só quando a pessoa para de digitar
+  const buscaAtiva = useValorAtrasado(busca.trim());
   // ?ate=N é controle da paginação, não filtro
   const { ate, ...filtros } = Object.fromEntries(params);
   const chaveFiltros = JSON.stringify(filtros);
   const { dados, carregando, erro, temMais, carregarMais, carregandoMais, erroMais } = usePaginacao(
-    (p) => api.listar({ ...filtros, busca: busca.trim() || undefined, ...p }),
-    [chaveFiltros, busca],
+    (p) => api.listar({ ...filtros, busca: buscaAtiva || undefined, ...p }),
+    [chaveFiltros, buscaAtiva],
     POR_PAGINA,
     (a) => a.id,
     {
@@ -49,7 +53,7 @@ export default function PainelAnimais() {
         ),
     },
   );
-  useRolagemRestaurada('painel-animais' + chaveFiltros + busca, !carregando && Boolean(dados));
+  useRolagemRestaurada('painel-animais' + chaveFiltros + buscaAtiva, !carregando && Boolean(dados));
 
   const ativo = (f) => JSON.stringify(f.params) === chaveFiltros;
 
@@ -82,7 +86,7 @@ export default function PainelAnimais() {
         />
       </div>
 
-      <div className="chips chips-rolagem my-3" role="group" aria-label="Filtros">
+      <TrilhoChips className="my-3" role="group" aria-label="Filtros">
         {FILTROS.map((f) => (
           <button
             key={f.rotulo}
@@ -94,7 +98,7 @@ export default function PainelAnimais() {
             {f.rotulo}
           </button>
         ))}
-      </div>
+      </TrilhoChips>
 
       {erro ? (
         <Vazio icone="fa-wifi" titulo={erro.message} />

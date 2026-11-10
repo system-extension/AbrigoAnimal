@@ -10,6 +10,7 @@ import Carregando from '../../components/ui/Carregando';
 import Vazio from '../../components/ui/Vazio';
 import Folha from '../../components/ui/Folha';
 import { CampoTexto } from '../../components/ui/Campos';
+import TrilhoChips from '../../components/ui/TrilhoChips';
 
 const cor = (s) => STATUS_SOLICITACAO.find((x) => x.valor === s)?.cor ?? 'cinza';
 const ABAS = [{ valor: '', rotulo: 'Abertos' }, ...STATUS_SOLICITACAO];
@@ -58,7 +59,7 @@ export default function PainelSolicitacoes() {
       <h1 className="h3">Pedidos</h1>
       <p className="texto-suave small">Pessoas que preencheram o formulário do site.</p>
 
-      <div className="chips chips-rolagem mb-3" role="tablist">
+      <TrilhoChips className="mb-3" role="tablist">
         {[ABAS[1], ABAS[2], ABAS[0], ABAS[3], ABAS[4]].map((a) => (
           <button
             key={a.valor}
@@ -71,7 +72,7 @@ export default function PainelSolicitacoes() {
             {a.rotulo}
           </button>
         ))}
-      </div>
+      </TrilhoChips>
 
       {carregando && !dados ? (
         <Carregando />
