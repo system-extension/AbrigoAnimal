@@ -2,14 +2,14 @@
 # A imagem final leva só a JRE + o .jar: sem Maven, sem Node, sem código-fonte.
 
 # ---------------------------------------------------------------------------
-# Estágio 1 — frontend (DESCOMENTAR quando existir frontend/package.json)
+# Estágio 1 — frontend (build do React)
 # ---------------------------------------------------------------------------
-# FROM node:22-alpine AS frontend
-# WORKDIR /app
-# COPY frontend/package*.json ./
-# RUN npm ci
-# COPY frontend/ ./
-# RUN npm run build
+FROM node:22-alpine AS frontend
+WORKDIR /app
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
 
 # ---------------------------------------------------------------------------
 # Estágio 2 — backend
@@ -19,8 +19,8 @@ WORKDIR /app
 COPY backend/pom.xml ./
 RUN mvn -B -q dependency:go-offline
 COPY backend/src ./src
-# Quando o frontend existir, descomentar para embutir o build do React:
-# COPY --from=frontend /app/dist ./src/main/resources/static
+# Embute o build do React: o Spring entrega o site e a API no mesmo endereço (SpaConfig).
+COPY --from=frontend /app/dist ./src/main/resources/static
 RUN mvn -B -q package -DskipTests
 
 # ---------------------------------------------------------------------------

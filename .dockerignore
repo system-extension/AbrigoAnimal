@@ -1,0 +1,15 @@
+# O que NÃO entra no build da imagem Docker.
+# Sem isso, o node_modules do Windows iria junto (e quebraria o build no Linux)
+# e um .env com segredos poderia acabar dentro da imagem.
+.git
+.github
+.idea
+.vscode
+docs
+**/node_modules
+**/.env
+**/.env.*
+!**/.env.example
+frontend/dist
+backend/target
+backend/dados

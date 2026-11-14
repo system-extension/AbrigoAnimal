@@ -44,6 +44,10 @@ server:
   # Desligado de propósito: o "framework" confiava no X-Forwarded-For que QUALQUER visitante pode
   # forjar. O IP real é decidido em IpDoCliente (abrigo.ip-cliente abaixo, ADR 0013).
   forward-headers-strategy: none
+  # Compacta o que é texto (site, API): o JS do React cai de ~380 kB para ~115 kB na rede.
+  compression:
+    enabled: true
+    mime-types: text/html,text/css,text/javascript,application/javascript,application/json,image/svg+xml
   servlet:
     session:
       timeout: 8h
