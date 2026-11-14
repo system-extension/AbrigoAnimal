@@ -5,6 +5,7 @@ import useRolagemRestaurada from '../../hooks/useRolagemRestaurada';
 import CartaoAnimal, { CartaoAnimalEsqueleto } from '../../components/pets/CartaoAnimal';
 import Vazio from '../../components/ui/Vazio';
 import CarregarMais from '../../components/ui/CarregarMais';
+import TrilhoChips from '../../components/ui/TrilhoChips';
 import './paginas.css';
 
 const POR_PAGINA = 24;
@@ -78,7 +79,7 @@ export default function Animais() {
           : 'Cada animal tem uma história. Toque para conhecer o jeito, os cuidados e como fazer parte da vida dele.'}
       </p>
 
-      <div className="chips chips-rolagem filtros-fixos" role="group" aria-label="Filtrar animais">
+      <TrilhoChips className="filtros-fixos" role="group" aria-label="Filtrar animais">
         {FILTROS.map((f) => (
           <button
             key={f.id}
@@ -91,7 +92,7 @@ export default function Animais() {
             {f.rotulo}
           </button>
         ))}
-      </div>
+      </TrilhoChips>
 
       {!carregando && dados && (
         <p className="texto-suave small mt-3 mb-2" aria-live="polite">

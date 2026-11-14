@@ -1,16 +1,34 @@
 import { Link } from 'react-router-dom';
+import { listarAnimais } from '../../api/vitrine';
+import useCarregar from '../../hooks/useCarregar';
 import imgAbrigo from '../../assets/img/sobre-abrigo.webp';
 import imgResgate from '../../assets/img/sobre-resgate.webp';
 import imgCuidado from '../../assets/img/sobre-cuidado.webp';
 import './paginas.css';
 
-const FATOS = [
-  { valor: '2001', texto: 'fundado por voluntários' },
-  { valor: '~250', texto: 'cães e gatos acolhidos' },
-  { valor: '~120', texto: 'são idosos' },
-];
+/** Números da vitrine, contados no banco (tamanho 1: só interessa o total). */
+const contarVitrine = async () => {
+  const [todos, idosos] = await Promise.all([
+    listarAnimais({ tamanho: 1 }),
+    listarAnimais({ idoso: true, tamanho: 1 }),
+  ]);
+  return { todos: todos.total, idosos: idosos.total };
+};
 
 export default function Sobre() {
+  const numeros = useCarregar(contarVitrine);
+  const n = numeros.dados;
+  const FATOS = [
+    { valor: '2001', texto: 'fundado por voluntários' },
+    // enquanto carrega mostra "…"; se a consulta falhar, os dois somem (melhor que número errado)
+    ...(numeros.erro
+      ? []
+      : [
+          { valor: n ? n.todos : '…', texto: 'animais esperando um padrinho ou um lar' },
+          { valor: n ? n.idosos : '…', texto: 'são idosos' },
+        ]),
+  ];
+
   return (
     <>
       <section className="sobre-topo">

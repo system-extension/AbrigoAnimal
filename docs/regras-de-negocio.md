@@ -24,7 +24,7 @@ responde **422** com a mensagem mostrada ao usuário; dado em formato inválido 
 | RN-09 | **Situação**: disponível, em tratamento, adotado ou óbito. Todo animal novo nasce **disponível e visível na vitrine**. Ter padrinho **não** é situação: o animal apadrinhado continua disponível para adoção | `Animal` | RF-04 |
 | RN-10 | **Óbito** só entra pelo registro de óbito (não pela troca de situação), com data obrigatória e não futura. É **estado final**: a situação não muda mais, o animal sai da vitrine e não pode voltar a ela, e não aceita novos apadrinhamentos | `Animal` | RF-04 |
 | RN-11 | **Fotos**: até 10 por animal; só JPG, PNG ou WEBP (conferido pelo conteúdo do arquivo, não pelo nome); até 3 MB (o celular já envia comprimido). A primeira foto é a principal; remover a principal promove a seguinte | `Animal`, `GestaoAnimais`, `TipoImagem` | RF-02 |
-| RN-12 | Duas pessoas editando o mesmo animal: quem salvar por último recebe aviso (**409**) em vez de apagar a alteração da outra | `GestaoAnimais` (campo `versao`) | RNF-09 |
+| RN-12 | Duas pessoas editando o mesmo animal: quem abre um cadastro já aberto vê "Fulano está editando desde HH:MM" e escolhe só visualizar ou editar mesmo assim ([ADR 0014](adr/0014-aviso-de-presenca-na-edicao.md)). Quem salvar por último recebe aviso (**409**) com o que mudou, sem perder o que digitou, e decide se salva por cima | `GestaoAnimais` (campo `versao`), `EdicoesEmAndamento`, `FormularioAnimal.jsx` | RNF-09 |
 
 ## Vitrine pública
 
@@ -60,7 +60,7 @@ responde **422** com a mensagem mostrada ao usuário; dado em formato inválido 
 |---|---|---|---|
 | RN-50 | Sem criar conta. Obrigatórios: nome, um contato (telefone com DDD ou e-mail) e **consentimento** LGPD | `Solicitacao` | RF-21, RF-25 |
 | RN-51 | Se vier de um animal, ele precisa estar **na vitrine** | `GestaoSolicitacoes` | RF-21 |
-| RN-52 | **Antispam**: campo isca escondido (se preenchido, finge sucesso e não grava) e limite de envios por IP por hora (padrão 5, configurável) | `GestaoSolicitacoes`, `LimitadorDeEnvios` | RF-26 |
+| RN-52 | **Antispam**: campo isca escondido (se preenchido, finge sucesso e não grava) e limite de envios por IP por hora (padrão 5, configurável; IP decidido por `IpDoCliente`) | `GestaoSolicitacoes`, `LimitadorDeEnvios` | RF-26 |
 | RN-53 | Toda solicitação nasce **nova**; a equipe muda para em contato, concluída ou descartada, com observação interna opcional | `Solicitacao` | RF-24 |
 | RN-54 | Ao chegar uma solicitação, o sistema publica um evento. Hoje o aviso só vai para o log (canal de notificação a definir) | `AvisoNovaSolicitacao` | RF-27 |
 
@@ -68,10 +68,14 @@ responde **422** com a mensagem mostrada ao usuário; dado em formato inválido 
 
 | ID | Regra | Onde | Origem |
 |---|---|---|---|
-| RN-60 | Login individual por e-mail e senha; e-mail único (sem diferenciar maiúsculas); senha com **no mínimo 8 caracteres** | `GestaoUsuarios`, `Usuario` | RNF-03 |
+| RN-60 | Login individual por e-mail e senha; e-mail único (sem diferenciar maiúsculas); senha com **no mínimo 8 caracteres** e no máximo 72 bytes (limite do BCrypt: 72 letras sem acento) | `GestaoUsuarios`, `Usuario` | RNF-03 |
 | RN-61 | Primeiro acesso: se não houver nenhum usuário, o sistema cria o administrador a partir de `ADMIN_EMAIL`/`ADMIN_SENHA` | `AdminInicial` | — |
-| RN-62 | Usuário desativado não consegue mais entrar (uma sessão já aberta vale até expirar); ninguém pode desativar o próprio usuário. Não há perfis diferentes: toda a equipe tem o mesmo acesso | `GestaoUsuarios` | RNF-03 |
+| RN-62 | Dois perfis ([ADR 0012](adr/0012-perfil-administrador.md)): **administrador** (o primeiro usuário) e **equipe** (quem ele adiciona). Os dois usam o painel inteiro; só o administrador gerencia a equipe (adicionar, desativar, reativar, senha provisória). Usuário desativado não consegue mais entrar (uma sessão já aberta vale até expirar); ninguém desativa o próprio usuário | `SegurancaConfig`, `GestaoUsuarios` | RNF-03 |
 | RN-63 | A sessão expira após 8 horas | `application.yml` | — |
+| RN-64 | **Trocar a própria senha** exige a senha atual, e a nova precisa ser diferente | `GestaoUsuarios` | RNF-03 |
+| RN-65 | **Esqueceu a senha**: o administrador define uma senha provisória (o sistema não envia e-mail). Nem ele usa esse caminho para a própria senha (RN-64). Quem já estava logado continua até a sessão expirar | `SegurancaConfig`, `GestaoUsuarios` | RNF-03 |
+| RN-66 | Usuário desativado pode ser **reativado** (pelo administrador); ninguém é apagado (o nome fica na auditoria de quem alterou cada cadastro) | `GestaoUsuarios` | RNF-09 |
+| RN-67 | **Bloqueio de login** ([ADR 0013](adr/0013-bloqueio-de-login.md)): 5 senhas erradas seguidas no mesmo e-mail e IP bloqueiam aquele e-mail naquele IP; um IP que erra senha em 3 e-mails diferentes em 1 hora é bloqueado por inteiro. Sem prazo. Além disso, 10 senhas erradas na mesma conta em 15 minutos, de qualquer IP, fazem a conta recusar logins por 15 minutos. O IP vem de `IpDoCliente` (o `X-Forwarded-For` enviado pelo visitante não é confiável). Bloqueado recebe a mesma resposta de senha errada, no mesmo tempo (toda recusa espera 400 ms), até com a senha certa. O administrador desbloqueia colegas na tela Equipe; a conta dele e IPs inteiros só pelo banco | `ProtecaoLogin`, `FiltroBloqueioLogin`, `IpDoCliente` | RNF-03 |
 
 ## Pontos em aberto (decidir com a ONG)
 

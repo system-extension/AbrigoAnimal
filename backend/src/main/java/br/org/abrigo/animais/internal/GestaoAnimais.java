@@ -52,7 +52,7 @@ public class GestaoAnimais {
     public AnimalDetalhe cadastrar(DadosAnimal dados) {
         validarChipsUnicos(dados, null);
         Animal animal = animais.save(Animal.cadastrar(dados));
-        return mapeador.paraDetalhe(animal);
+        return responder(animal);
     }
 
     /**
@@ -66,7 +66,7 @@ public class GestaoAnimais {
         }
         validarChipsUnicos(dados, id);
         animal.atualizar(dados);
-        return mapeador.paraDetalhe(animal);
+        return responder(animal);
     }
 
     @Transactional(readOnly = true)
@@ -83,13 +83,13 @@ public class GestaoAnimais {
     public AnimalDetalhe alterarSituacao(UUID id, SituacaoAnimal nova) {
         Animal animal = carregar(id);
         animal.alterarSituacao(nova);
-        return mapeador.paraDetalhe(animal);
+        return responder(animal);
     }
 
     public AnimalDetalhe registrarObito(UUID id, LocalDate data) {
         Animal animal = carregar(id);
         animal.registrarObito(data, LocalDate.now(clock));
-        return mapeador.paraDetalhe(animal);
+        return responder(animal);
     }
 
     public AnimalDetalhe alterarVisibilidade(UUID id, boolean visivel) {
@@ -99,7 +99,7 @@ public class GestaoAnimais {
         } else {
             animal.ocultarDaVitrine();
         }
-        return mapeador.paraDetalhe(animal);
+        return responder(animal);
     }
 
     public AnimalDetalhe adicionarFoto(UUID id, MultipartFile arquivo) {
@@ -116,23 +116,33 @@ public class GestaoAnimais {
             throw e;
         }
         removerArquivoSeTransacaoFalhar(chave);
-        return mapeador.paraDetalhe(animal);
+        return responder(animal);
     }
 
     public AnimalDetalhe removerFoto(UUID id, UUID fotoId) {
         Animal animal = carregar(id);
         String chave = animal.removerFoto(fotoId);
         removerArquivoAposCommit(chave);
-        return mapeador.paraDetalhe(animal);
+        return responder(animal);
     }
 
     public AnimalDetalhe definirFotoPrincipal(UUID id, UUID fotoId) {
         Animal animal = carregar(id);
         animal.definirFotoPrincipal(fotoId);
-        return mapeador.paraDetalhe(animal);
+        return responder(animal);
     }
 
     // ------------------------------------------------------------------ apoio
+
+    /**
+     * Grava as alterações no banco ANTES de montar a resposta. Sem o flush, a versão e o
+     * "alterado por/em" só mudariam no commit, depois da resposta pronta: a tela receberia
+     * a versão antiga e o próximo "Salvar" daria um falso 409 (RN-12).
+     */
+    private AnimalDetalhe responder(Animal animal) {
+        animais.flush();
+        return mapeador.paraDetalhe(animal);
+    }
 
     private Animal carregar(UUID id) {
         return animais.findById(id).orElseThrow(() -> RecursoNaoEncontradoException.de("Animal", id));

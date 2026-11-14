@@ -156,10 +156,49 @@ class AnimaisIntegrationTest extends IntegracaoTest {
     }
 
     @Test
+    void respostaTrazAVersaoNovaParaOProximoSalvar() throws Exception {
+        String id = campo(cadastrarAnimalSimples("Mel"), "$.id");
+        String corpo = "{\"nome\": \"Mel\", \"especie\": \"CAO\", \"versao\": %s}";
+
+        // troca a situação e, em seguida, salva o cadastro com a versão que veio na resposta
+        String aposSituacao = mvc.perform(post("/api/animais/" + id + "/situacao").with(user(EQUIPE)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"situacao\": \"EM_TRATAMENTO\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.versao").value(1))
+                .andReturn().getResponse().getContentAsString();
+
+        String aposEditar = mvc.perform(put("/api/animais/" + id).with(user(EQUIPE)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo.formatted(campo(aposSituacao, "$.versao"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.versao").value(2))
+                .andReturn().getResponse().getContentAsString();
+
+        // a resposta do PUT também serve para o salvar seguinte (antes dava falso 409)
+        mvc.perform(put("/api/animais/" + id).with(user(EQUIPE)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo.formatted(campo(aposEditar, "$.versao"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void auditoriaRegistraQuemAlterou() throws Exception {
         String animal = cadastrarAnimalSimples("Nina");
 
         org.assertj.core.api.Assertions.assertThat(campo(animal, "$.atualizadoPor")).isEqualTo(EQUIPE);
+    }
+
+    @Test
+    void detalheTrazONomeDeQuemAlterouNaoSoOEmail() throws Exception {
+        mvc.perform(post("/api/animais").with(user("admin@teste.org")).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"nome\": \"Fubá\", \"especie\": \"CAO\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.atualizadoPor").value("admin@teste.org"))
+                .andExpect(jsonPath("$.atualizadoPorNome").value("Administrador"));
+
+        // quem não é da equipe cadastrada (ex.: carga inicial) não tem nome: a tela não mostra login técnico
+        String animal = cadastrarAnimalSimples("Canjica");
+        org.assertj.core.api.Assertions.assertThat(campo(animal, "$.atualizadoPorNome")).isNull();
     }
 
     @Test

@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import TrilhoChips from './TrilhoChips';
 
 /** Campo de texto com rótulo, dica e erro já ligados por acessibilidade. */
 export function CampoTexto({ rotulo, dica, erro, multilinha, obrigatorio, ...props }) {
@@ -34,12 +35,18 @@ export function CampoTexto({ rotulo, dica, erro, multilinha, obrigatorio, ...pro
   );
 }
 
+/** Chips que quebram linha (o padrão); com `rolagem`, o GrupoChips usa o TrilhoChips. */
+function ChipsQuebrando({ children }) {
+  return <div className="chips">{children}</div>;
+}
+
 /**
  * Escolha por "chips" (botões grandes) em vez de <select>: um toque só no celular.
  * multipla=true permite marcar vários (valor vira array).
  */
 export function GrupoChips({ rotulo, opcoes, valor, aoMudar, multipla, erro, rolagem, dica }) {
   const id = useId();
+  const Fileira = rolagem ? TrilhoChips : ChipsQuebrando;
   const marcado = (v) => (multipla ? (valor ?? []).includes(v) : valor === v);
   const alternar = (v) => {
     if (!multipla) return aoMudar(valor === v ? null : v);
@@ -52,7 +59,7 @@ export function GrupoChips({ rotulo, opcoes, valor, aoMudar, multipla, erro, rol
         {rotulo}
       </span>
       {dica && <span className="campo-dica">{dica}</span>}
-      <div className={`chips ${rolagem ? 'chips-rolagem' : ''}`}>
+      <Fileira>
         {opcoes.map((o) => {
           const v = typeof o === 'string' ? o : o.valor;
           const r = typeof o === 'string' ? o : o.rotulo;
@@ -69,7 +76,7 @@ export function GrupoChips({ rotulo, opcoes, valor, aoMudar, multipla, erro, rol
             </button>
           );
         })}
-      </div>
+      </Fileira>
       {erro && <span className="campo-erro">{erro}</span>}
     </div>
   );

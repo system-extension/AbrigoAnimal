@@ -5,7 +5,8 @@ React 19 + Vite, JavaScript ([ADR-003](../docs/adr)). Pensado primeiro para o ce
 
 ## Rodar
 
-Requer Node.js 20+.
+Requer Node.js 20+ e o **backend rodando** em `localhost:8080` (ver o [README da raiz](../README.md)).
+Todos os dados vêm do banco: não existe modo demonstração ([ADR 0011](../docs/adr/0011-fim-do-modo-demonstracao.md)).
 
 ```bash
 cd frontend
@@ -13,16 +14,10 @@ npm install
 npm run dev
 ```
 
-Abra `http://localhost:5173`. O painel fica em `/painel`.
+Abra `http://localhost:5173`. O painel fica em `/painel` (login com `ADMIN_EMAIL`/`ADMIN_SENHA` do backend).
+O Vite repassa `/api` e `/arquivos` para o Spring, então o navegador enxerga um endereço só.
 
-## Dois modos
-
-| Modo                      | Como ligar                                                                                                                      | De onde vêm os dados                                                              |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| **Demonstração** (padrão) | nada a fazer                                                                                                                    | Do próprio navegador (`src/api/mock`). Login: `equipe@abrigo.local` / `abrigo123` |
-| **API real**              | `frontend/.env.local` com `VITE_API_REAL=vitrine` (só o site público) ou `VITE_USAR_API=true` (tudo), e o backend na porta 8080 | Do Spring Boot (`/api/...`)                                                       |
-
-As telas não sabem em qual modo estão: elas só chamam funções de `src/api/`. Trocar de modo não exige mexer em tela.
+Banco vazio? Carregue dados fictícios com `backend/scripts/dados-teste.sql`.
 
 ## Comandos
 

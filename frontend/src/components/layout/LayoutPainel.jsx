@@ -2,8 +2,6 @@ import { useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import logo from '../../assets/img/logo.webp';
 import { useSessao } from '../../context/Sessao';
-import { USAR_API_REAL } from '../../api/config';
-import { restaurarDemonstracao } from '../../api/mock/banco';
 import '../../pages/painel/painel.css';
 
 const ABAS = [
@@ -39,6 +37,19 @@ export default function LayoutPainel() {
           <strong>Painel</strong>
         </Link>
         <div className="d-flex align-items-center gap-1">
+          <Link
+            to="/painel/equipe"
+            className="botao botao-texto"
+            title={usuario?.administrador ? 'Equipe e minha senha' : 'Minha conta'}
+          >
+            <i
+              className={`fa-solid ${usuario?.administrador ? 'fa-users-gear' : 'fa-user-gear'}`}
+              aria-hidden="true"
+            />
+            <span className="d-none d-sm-inline">
+              {usuario?.administrador ? 'Equipe' : 'Minha conta'}
+            </span>
+          </Link>
           <Link to="/" className="botao botao-texto" target="_blank" title="Abrir o site público">
             <i className="fa-solid fa-arrow-up-right-from-square" aria-hidden="true" />
             <span className="d-none d-sm-inline">Ver site</span>
@@ -54,25 +65,6 @@ export default function LayoutPainel() {
           </button>
         </div>
       </header>
-
-      {!USAR_API_REAL && (
-        <div className="faixa-demo">
-          <span>
-            <i className="fa-solid fa-flask" aria-hidden="true" /> Demonstração: os dados ficam só
-            neste navegador.
-          </span>
-          <button
-            type="button"
-            className="botao-link"
-            onClick={() =>
-              window.confirm('Apagar as alterações e voltar aos exemplos?') &&
-              restaurarDemonstracao()
-            }
-          >
-            Restaurar exemplos
-          </button>
-        </div>
-      )}
 
       <nav className="painel-abas" aria-label="Painel">
         {ABAS.map((a) => (

@@ -5,6 +5,7 @@ import * as apadrinhamentos from '../../api/apadrinhamentos';
 import * as animais from '../../api/animais';
 import { rotulo, TIPOS_APOIO } from '../../api/rotulos';
 import useCarregar from '../../hooks/useCarregar';
+import useValorAtrasado from '../../hooks/useValorAtrasado';
 import { useAvisos } from '../../context/Avisos';
 import { mascaraTelefone, dataBR } from '../../utils/formato';
 import Carregando from '../../components/ui/Carregando';
@@ -21,14 +22,15 @@ function FichaPessoa({ pessoa, aoFechar }) {
   const vinculos = useCarregar(() => apadrinhamentos.listar({ pessoaId: pessoa.id }), [pessoa.id]);
   const [vinculando, setVinculando] = useState(false);
   const [busca, setBusca] = useState('');
+  const buscaAnimal = useValorAtrasado(busca.trim());
   const [escolhido, setEscolhido] = useState(null);
   const [tipo, setTipo] = useState('AFETIVO');
   const opcoes = useCarregar(
     () =>
       vinculando
-        ? animais.listar({ busca: busca || undefined, tamanho: 20 })
+        ? animais.listar({ busca: buscaAnimal || undefined, tamanho: 20 })
         : Promise.resolve(null),
-    [vinculando, busca],
+    [vinculando, buscaAnimal],
   );
 
   const vincular = async () => {
@@ -53,6 +55,10 @@ function FichaPessoa({ pessoa, aoFechar }) {
     }
   };
 
+  // A folha só abre quando os afilhados chegam, já no tamanho final. Antes abria com o indicador
+  // de carregando e mudava de altura logo depois (encolhia em quem tem poucos afilhados).
+  if (vinculos.carregando && !vinculos.dados) return null;
+
   const ativos = (vinculos.dados ?? []).filter((v) => v.ativo);
   const antigos = (vinculos.dados ?? []).filter((v) => !v.ativo);
 
@@ -64,9 +70,7 @@ function FichaPessoa({ pessoa, aoFechar }) {
       </p>
 
       <h3 className="h6">Afilhados</h3>
-      {vinculos.carregando && !vinculos.dados ? (
-        <Carregando />
-      ) : ativos.length === 0 ? (
+      {ativos.length === 0 ? (
         <p className="texto-suave small">Nenhum afilhado ativo.</p>
       ) : (
         <ul className="list-unstyled d-grid gap-2">
@@ -190,7 +194,8 @@ export default function PainelPadrinhos() {
       : null,
   );
   const [erros, setErros] = useState({});
-  const lista = useCarregar(() => pessoas.listar({ busca: busca.trim() || undefined }), [busca]);
+  const buscaAtiva = useValorAtrasado(busca.trim()); // consulta só quando para de digitar
+  const lista = useCarregar(() => pessoas.listar({ busca: buscaAtiva || undefined }), [buscaAtiva]);
 
   useEffect(() => {
     if (params.get('novo')) setParams({}, { replace: true });
@@ -199,7 +204,9 @@ export default function PainelPadrinhos() {
   const salvarPessoa = async (e) => {
     e.preventDefault();
     try {
-      const p = await pessoas.salvar({ ...nova, consentimento: nova.consentimento });
+      // o backend chama o campo de "consentiu" (PessoaRequest)
+      const { consentimento, ...dados } = nova;
+      const p = await pessoas.salvar({ ...dados, consentiu: consentimento });
       avisar.sucesso('Pessoa cadastrada');
       setNova(null);
       setErros({});

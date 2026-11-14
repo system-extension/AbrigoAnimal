@@ -47,7 +47,8 @@ flowchart TB
 
 > Consequência importante: **em produção o front não pode ficar num domínio separado da API**
 > (ex.: front na Vercel e API em outro lugar). O cookie de sessão e o CSRF param de funcionar e a
-> prévia do WhatsApp deixa de existir. A Vercel serve só para demonstração (modo mock).
+> prévia do WhatsApp deixa de existir. O front não tem mais modo demonstração
+> ([ADR 0011](adr/0011-fim-do-modo-demonstracao.md)): sem a API, ele não funciona.
 
 ## 2. Stack
 
@@ -158,7 +159,11 @@ erDiagram
 | Acesso | `/api/public/**`, `/api/auth/csrf` e `/actuator/health` abertos; todo o resto de `/api/**` exige sessão. Uma regra só, em `SegurancaConfig` |
 | Login | `formLogin` em `/api/auth/login`; sessão em cookie `httpOnly`, `SameSite=Lax`, `Secure` em produção; expira em 8 h |
 | CSRF | cookie `XSRF-TOKEN` → header `X-XSRF-TOKEN` em todo POST/PUT/DELETE (o `cliente.js` do front faz isso sozinho) |
-| Senha | BCrypt com prefixo de algoritmo (`{bcrypt}...`) |
+| Senha | BCrypt com prefixo de algoritmo (`{bcrypt}...`); de 8 caracteres a 72 bytes (limite do BCrypt) |
+| Perfis | administrador (gerencia a equipe: `/api/usuarios/**` com `hasRole("ADMIN")`) e equipe ([ADR 0012](adr/0012-perfil-administrador.md)) |
+| Força bruta no login | bloqueio permanente no banco: e-mail+IP após 5 erros seguidos, IP inteiro após errar 3 e-mails em 1h; conta recusa por 15 min após 10 erros de qualquer IP; resposta e tempo iguais aos de senha errada (piso de 400 ms em toda recusa) ([ADR 0013](adr/0013-bloqueio-de-login.md)) |
+| Nomes nas telas | a auditoria grava o login (e-mail); as telas mostram o nome da pessoa, traduzido pela interface `NomesDaEquipe` (plataforma), implementada pelo módulo identidade |
+| IP do visitante | `IpDoCliente`, modo em `IP_CLIENTE_MODO`; o `X-Forwarded-For` não é aceito cegamente (`forward-headers-strategy: none`) |
 | Dados públicos | **barreira dupla**: `AnimalVitrine` (módulo animais) e `AnimalPublicoResponse` (vitrine) só têm campos públicos; o teste `ApiPublicaSemDadosSensiveisTest` falha se chip, ala, canil, CPF, telefone, e-mail ou endereço aparecerem numa rota pública |
 | Formulário público | consentimento obrigatório, campo isca contra robôs, limite de envios por IP/hora |
 | Upload | tipo de imagem conferido pelos bytes (não pelo que o navegador diz); máximo 3 MB; o celular já comprime |
@@ -169,16 +174,16 @@ erDiagram
 ```
 frontend/src/
 ├── api/          ÚNICA camada que fala com o backend (cliente.js: cookie + CSRF + erros)
-│   └── mock/     backend falso no navegador (modo demonstração)
 ├── components/   layout, pets, painel, ui (Campos, Folha, CarregarMais...)
 ├── hooks/        useCarregar, usePaginacao, useRolagemRestaurada
 ├── pages/        publico/ (vitrine, ficha, formulários) e painel/ (equipe)
 └── styles/       tema.css: tokens do guia de design (docs/DESIGN.md)
 ```
 
-- **As telas não sabem de onde vêm os dados**: só chamam funções de `src/api/`. Cada área liga no
-  backend separadamente (`VITE_API_REAL=vitrine` ou `VITE_USAR_API=true` para tudo); sem variável,
-  tudo roda em **modo demonstração** (dados no navegador). Assim a integração é feita por partes.
+- **Todos os dados vêm do banco**, pela API ([ADR 0011](adr/0011-fim-do-modo-demonstracao.md)). As
+  telas só chamam funções de `src/api/`, nunca `fetch` direto.
+- **Listas se atualizam sozinhas**: depois de toda gravação bem-sucedida, o `cliente.js` avisa as
+  telas abertas (`EVENTO_DADOS`) e o `useCarregar` busca de novo, sem piscar a tela.
 - **Mobile-first**: a equipe cadastra pelo celular. Fotos comprimidas no aparelho (1600 px, WebP,
   sem dados de GPS) antes do envio.
 - **Listas longas** paginadas no backend; a tela soma páginas com "Carregar mais" e guarda na URL
@@ -225,9 +230,7 @@ subiu. Logs em saída padrão.
 | Hospedagem | em decisão (próxima ADR) |
 | Domínio | o `abrigoanimal.org.br` não é da ONG: registrar um novo em nome da ONG |
 | Backup automatizado | a implementar junto com a hospedagem |
-| Estágio do front no `Dockerfile` | descomentar e usar `VITE_USAR_API=true` |
-| Tela de usuários e troca de senha | API pronta, falta a tela |
-| Limite de tentativas de login | a implementar |
+| Estágio do front no `Dockerfile` | descomentar (o build não precisa de variável) |
 
 ## 8. Como rodar localmente
 
@@ -237,3 +240,7 @@ Ver o [README](../README.md#rodando-localmente). Em resumo: Docker aberto e JDK 
 
 Carga das planilhas da ONG: `backend/scripts/importar_planilhas.py` (o SQL gerado fica em
 `backend/dados/`, fora do git).
+
+Dados fictícios para testar as telas (gato, óbito, adotado, oculto, padrinhos, pedidos em todos os
+status): `backend/scripts/dados-teste.sql`; para tirar, `limpar-dados-teste.sql`. Os dois mexem só
+no que tem `criado_por = 'dados-teste'`. O modo de rodar está no cabeçalho de cada arquivo.

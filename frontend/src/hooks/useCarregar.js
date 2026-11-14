@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { EVENTO_DADOS } from '../api/mock/banco';
+import { EVENTO_DADOS } from '../api/cliente';
 
 /**
  * Carrega dados de uma função assíncrona e controla os 3 estados de toda tela:
@@ -7,7 +7,8 @@ import { EVENTO_DADOS } from '../api/mock/banco';
  *
  * `deps`: quando muda (ex.: filtros), carrega de novo.
  * `recarregar()`: força nova busca.
- * No modo demonstração, atualiza sozinho (sem piscar a tela) quando outra tela altera os dados.
+ * Depois de qualquer gravação no backend (cliente.js dispara EVENTO_DADOS), busca de novo
+ * sozinho, sem piscar a tela: ex.: marcar um pedido como "Concluída" tira ele da aba "Nova".
  */
 export default function useCarregar(funcao, deps = []) {
   const ultimaFuncao = useRef(funcao);

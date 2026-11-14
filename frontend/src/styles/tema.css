@@ -298,6 +298,75 @@ a {
 .chips-rolagem::-webkit-scrollbar {
   display: none;
 }
+
+/* TrilhoChips: esmaecido nas bordas com chips escondidos + setas em telas com mouse */
+.trilho {
+  position: relative;
+  /* dentro de grid/flex (ex.: .campo), sem isto o invólucro cresce até a largura de todos os
+     chips e empurra a página para os lados no celular */
+  min-width: 0;
+  max-width: 100%;
+  --trilho-borda: calc(var(--bs-gutter-x, 1.5rem) * -0.5);
+  --trilho-fundo: var(--fundo); /* cor do esmaecido = cor do que está atrás */
+}
+.cartao .trilho {
+  --trilho-fundo: var(--superficie);
+}
+.trilho::before,
+.trilho::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2.5rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 1;
+}
+.trilho::before {
+  left: var(--trilho-borda);
+  background: linear-gradient(to right, var(--trilho-fundo), transparent);
+}
+.trilho::after {
+  right: var(--trilho-borda);
+  background: linear-gradient(to left, var(--trilho-fundo), transparent);
+}
+.trilho-mais-esquerda::before,
+.trilho-mais-direita::after {
+  opacity: 1;
+}
+.trilho-seta {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .trilho-seta {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    margin-top: -18px;
+    border: 1px solid var(--linha);
+    border-radius: 50%;
+    background: var(--superficie);
+    color: var(--tinta);
+    box-shadow: 0 2px 8px rgba(28, 27, 26, 0.12);
+    cursor: pointer;
+  }
+  .trilho-seta:hover {
+    border-color: var(--laranja);
+    color: var(--laranja);
+  }
+  .trilho-seta-esquerda {
+    left: 0;
+  }
+  .trilho-seta-direita {
+    right: 0;
+  }
+}
 .chip {
   display: inline-flex;
   align-items: center;

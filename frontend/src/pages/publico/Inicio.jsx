@@ -50,7 +50,7 @@ const MURAL = [
 
 export default function Inicio() {
   const idosos = useCarregar(() => listarAnimais({ idoso: true, tamanho: 4 }));
-  const videos = useCarregar(() => listarVideos({ tamanho: 10 }));
+  const videos = useCarregar(() => listarVideos());
   const role = proximoRole();
 
   return (

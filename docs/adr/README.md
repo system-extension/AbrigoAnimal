@@ -21,5 +21,10 @@ renumeradas por data. Correspondência: Notion 001–004 = 0001–0004; Notion 0
 | [0008](0008-java-25.md) | Java 25 (LTS) | 27/09/2026 | técnica |
 | [0009](0009-videos-no-youtube.md) | Vídeos dos animais no YouTube (implementação adiada) | 30/09/2026 | escopo |
 | [0010](0010-vacinas-no-cadastro.md) | Vacinas registradas no cadastro do animal, sem gestão de vacinas | 07/11/2026 | escopo |
+| [0011](0011-fim-do-modo-demonstracao.md) | Fim do modo demonstração: todos os dados vêm do banco | 08/11/2026 | técnica |
+| [0012](0012-perfil-administrador.md) | Perfil de administrador para gerenciar a equipe | 08/11/2026 | técnica |
+| [0013](0013-bloqueio-de-login.md) | Bloqueio de login contra força bruta, sem dar pistas | 08/11/2026 | técnica |
 
-Próxima: **0011 · hospedagem de produção** (quando a equipe decidir).
+| [0014](0014-aviso-de-presenca-na-edicao.md) | Aviso de presença na edição, sem trava | 09/11/2026 | técnica |
+
+Próxima: **0015 · hospedagem de produção (Railway)**.

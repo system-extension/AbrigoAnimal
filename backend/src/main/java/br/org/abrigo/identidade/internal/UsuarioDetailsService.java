@@ -27,7 +27,7 @@ class UsuarioDetailsService implements UserDetailsService {
         return User.withUsername(u.getEmail())
                 .password(u.getSenhaHash())
                 .disabled(!u.isAtivo())
-                .authorities("ROLE_EQUIPE")
+                .roles(u.isAdministrador() ? new String[] {"EQUIPE", "ADMIN"} : new String[] {"EQUIPE"})
                 .build();
     }
 }
