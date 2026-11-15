@@ -207,7 +207,9 @@ A JVM usa no máximo 75% da memória do container.
 | `DB_URL`, `DB_USER`, `DB_PASSWORD` | banco gerenciado |
 | `ADMIN_NOME`, `ADMIN_EMAIL`, `ADMIN_SENHA` | primeiro usuário (só criado se não houver nenhum) |
 | `URL_PUBLICA` | domínio público (usado nas prévias do WhatsApp) |
-| `ARMAZENAMENTO_DIR` | pasta das fotos, **num volume persistente** ([ADR 0007](adr/0007-armazenamento-atras-de-interface.md)) |
+| `ARMAZENAMENTO_TIPO` | `s3` (fotos no Cloudflare R2, [ADR 0015](adr/0015-fotos-no-cloudflare-r2.md)) |
+| `S3_ENDPOINT`, `S3_REGIAO`, `S3_BUCKET`, `S3_CHAVE_ACESSO`, `S3_CHAVE_SECRETA` | dados do bucket no R2 ([guia de produção](producao.md)) |
+| `ARMAZENAMENTO_URL_PUBLICA` | domínio público do bucket (vazio = fotos passam pelo backend) |
 | `COOKIE_SECURE` | `true` |
 | `SOLICITACOES_LIMITE_HORA` | antispam do formulário |
 | `PORT` | definido pela plataforma |
@@ -220,17 +222,18 @@ subiu. Logs em saída padrão.
 ### Backup
 
 - `pg_dump` diário, guardado fora da plataforma do banco, retenção de 30 dias.
-- Fotos: cópia do volume (ou do bucket, se migrar para R2/S3).
+- Fotos: cópia do bucket do R2.
 - **Teste de restauração** antes da entrega e periodicamente: backup nunca restaurado não é backup.
 
 ### Pendências de produção
 
 | Item | Situação |
 |---|---|
-| Hospedagem | em decisão (próxima ADR) |
+| Hospedagem | Railway (ADR 0016, a escrever) |
 | Domínio | o `abrigoanimal.org.br` não é da ONG: registrar um novo em nome da ONG |
 | Backup automatizado | a implementar junto com a hospedagem |
-| Estágio do front no `Dockerfile` | descomentar (o build não precisa de variável) |
+| Estágio do front no `Dockerfile` | feito (B4) |
+| Fotos fora do container | feito: Cloudflare R2 ([ADR 0015](adr/0015-fotos-no-cloudflare-r2.md)); falta criar o bucket na conta da ONG |
 
 ## 8. Como rodar localmente
 

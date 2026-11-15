@@ -1,7 +1,7 @@
 # Guia de produção (rascunho)
 
 Procedimentos do responsável técnico no ambiente de produção (Railway). Este guia cresce junto
-com o deploy (ADR 0015, a escrever): variáveis, domínio, backup e restauração entram aqui.
+com o deploy (ADR 0016, a escrever): variáveis, domínio, backup e restauração entram aqui.
 
 ## Acessar o banco de produção
 
@@ -80,6 +80,39 @@ commit;
 ```sql
 select email, em from tentativa_login where ip = '200.100.50.25' order by em desc;
 ```
+
+## Fotos no Cloudflare R2 (ADR 0015)
+
+Feito uma vez, na conta Cloudflare **da ONG** (o responsável técnico entra como membro, sem acesso
+à cobrança):
+
+1. **R2 → ativar.** Passa por um "checkout" mesmo no plano gratuito (10 GB, sem custo de saída).
+2. **Criar o bucket** `abrigo-fotos`, localização automática. Deixe o acesso público **desligado**
+   e não ative o endereço `r2.dev` (é de teste, com limite de uso).
+3. **Criar um token de API do R2** (R2 → Gerenciar tokens de API): permissão **Leitura e escrita
+   de objetos**, aplicada **só ao bucket `abrigo-fotos`**. Anote o *Access Key ID* e o *Secret
+   Access Key* (o segredo aparece uma vez só; guarde no gerenciador de senhas da ONG).
+4. **Variáveis no Railway** (serviço da aplicação):
+
+   | Variável | Valor |
+   |---|---|
+   | `ARMAZENAMENTO_TIPO` | `s3` |
+   | `S3_ENDPOINT` | `https://<ID-da-conta>.r2.cloudflarestorage.com` (aparece na página do bucket) |
+   | `S3_REGIAO` | `auto` |
+   | `S3_BUCKET` | `abrigo-fotos` |
+   | `S3_CHAVE_ACESSO` / `S3_CHAVE_SECRETA` | as do token do passo 3 |
+   | `S3_CRIAR_BUCKET` | não definir (só desenvolvimento) |
+   | `ARMAZENAMENTO_URL_PUBLICA` | vazio no início (fotos passam pelo backend) |
+
+5. **Conferir no log do deploy:** `Fotos no bucket "abrigo-fotos" (entregues pelo backend em /arquivos)`.
+   Se o bucket ou a chave estiverem errados, a aplicação não sobe e o log diz o que conferir.
+6. **Depois que o domínio da ONG estiver com o DNS na Cloudflare:** bucket → Configurações →
+   Domínios personalizados → conectar `fotos.<domínio>`. Teste abrindo uma foto por esse endereço
+   e só então defina `ARMAZENAMENTO_URL_PUBLICA=https://fotos.<domínio>`. Para voltar atrás, basta
+   apagar a variável: as fotos voltam a passar pelo backend, sem perder nada.
+
+**Trocar a chave** (se vazar ou alguém sair da equipe): crie um token novo, troque as duas
+variáveis no Railway, confira o deploy e só então apague o token antigo no painel.
 
 ## Senha do administrador
 

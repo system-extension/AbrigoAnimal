@@ -68,7 +68,7 @@ responde **422** com a mensagem mostrada ao usuário; dado em formato inválido 
 
 | ID | Regra | Onde | Origem |
 |---|---|---|---|
-| RN-60 | Login individual por e-mail e senha; e-mail único (sem diferenciar maiúsculas); senha com **no mínimo 8 caracteres** e no máximo 72 bytes (limite do BCrypt: 72 letras sem acento) | `GestaoUsuarios`, `Usuario` | RNF-03 |
+| RN-60 | Login individual por e-mail e senha; e-mail único (sem diferenciar maiúsculas) e **completo** (`nome@dominio.ext`, sem espaços: barra erros de digitação como `maria@gmail`; o sistema não confere se a caixa existe, porque não envia e-mails); senha com **no mínimo 8 caracteres** e no máximo 72 bytes (limite do BCrypt: 72 letras sem acento) | `GestaoUsuarios`, `Usuario` | RNF-03 |
 | RN-61 | Primeiro acesso: se não houver nenhum usuário, o sistema cria o administrador a partir de `ADMIN_EMAIL`/`ADMIN_SENHA` | `AdminInicial` | — |
 | RN-62 | Dois perfis ([ADR 0012](adr/0012-perfil-administrador.md)): **administrador** (o primeiro usuário) e **equipe** (quem ele adiciona). Os dois usam o painel inteiro; só o administrador gerencia a equipe (adicionar, desativar, reativar, senha provisória). Usuário desativado não consegue mais entrar (uma sessão já aberta vale até expirar); ninguém desativa o próprio usuário | `SegurancaConfig`, `GestaoUsuarios` | RNF-03 |
 | RN-63 | A sessão expira após 8 horas | `application.yml` | — |

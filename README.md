@@ -55,6 +55,18 @@ $env:ADMIN_EMAIL="voce@exemplo.com"; $env:ADMIN_SENHA="trocar-esta-senha"; .\mvn
 
 Linux/macOS/Git Bash: troque `.\mvnw.cmd` por `./mvnw`.
 
+**Fotos como em produção (opcional).** Por padrão as fotos vão para a pasta `dados/`. Para testar
+com um servidor S3 local, igual ao Cloudflare R2 ([ADR 0015](docs/adr/0015-fotos-no-cloudflare-r2.md)):
+
+```powershell
+docker compose --profile s3 up -d
+$env:ARMAZENAMENTO_TIPO="s3"; $env:S3_ENDPOINT="http://localhost:9000"; $env:S3_REGIAO="us-east-1"
+$env:S3_BUCKET="abrigo-fotos"; $env:S3_CHAVE_ACESSO="abrigo"; $env:S3_CHAVE_SECRETA="abrigo-dev-s3"; $env:S3_CRIAR_BUCKET="true"
+.\mvnw.cmd spring-boot:run
+```
+
+As fotos que já estavam na pasta `dados/` não aparecem nesse modo (ficam no disco); as novas vão para o S3 local.
+
 API em http://localhost:8080 · saúde: http://localhost:8080/actuator/health
 A documentação dos módulos é gerada em `backend/target/spring-modulith-docs`.
 

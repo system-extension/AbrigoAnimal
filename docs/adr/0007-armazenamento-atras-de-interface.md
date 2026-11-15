@@ -1,6 +1,6 @@
 # 0007 · Armazenamento de fotos atrás de uma interface
 
-**Status:** aceita (2026-09-26)
+**Status:** aceita (2026-09-26). Implementação S3/R2 decidida na [ADR 0015](0015-fotos-no-cloudflare-r2.md).
 
 ## Contexto
 A hospedagem ainda não foi decidida (Railway/Neon/R2, AWS pela universidade ou créditos para ONG).
