@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 @Entity
 @Table(name = "usuario")
@@ -48,11 +49,26 @@ public class Usuario extends EntidadeBase {
         }
         Usuario u = new Usuario();
         u.nome = nome.trim();
-        u.email = normalizarEmail(email);
+        u.email = validarFormato(normalizarEmail(email));
         u.senhaHash = senhaHash;
         u.ativo = true;
         u.administrador = administrador;
         return u;
+    }
+
+    /**
+     * Formato de e-mail para quem entra na equipe: algo@dominio.ext, sem espaços.
+     * Mais rígido que o @Email do Jakarta, que aceita "maria@abrigo" (sem o ".com").
+     * Não confere se a caixa existe (o sistema não envia e-mails); só barra erros de digitação.
+     */
+    private static final Pattern FORMATO_EMAIL =
+            Pattern.compile("^[^@\\s]+@[^@\\s.]+(\\.[^@\\s.]+)*\\.[a-z][a-z0-9-]+$");
+
+    static String validarFormato(String email) {
+        if (email.length() > 254 || !FORMATO_EMAIL.matcher(email).matches()) {
+            throw new RegraNegocioException("E-mail inválido. Confira se está completo, por exemplo: nome@gmail.com");
+        }
+        return email;
     }
 
     public static String normalizarEmail(String email) {
