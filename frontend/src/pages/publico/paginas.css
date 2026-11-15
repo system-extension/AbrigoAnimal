@@ -113,10 +113,11 @@ figcaption {
 /* ----------------------------- Catálogo ------------------------------ */
 .filtros-fixos {
   position: sticky;
-  top: calc(68px + env(safe-area-inset-top));
+  /* 68px do cabeçalho + 1px da linha de baixo dele: sem o 1px, a faixa encostava/entrava sob a linha */
+  top: calc(69px + env(safe-area-inset-top));
   z-index: 10;
   background: var(--fundo);
-  padding-block: 0.6rem;
+  padding-block: 0.85rem 0.6rem;
 }
 
 .nota-apadrinhar {
@@ -188,6 +189,109 @@ figcaption {
   scroll-snap-align: center;
   background: var(--verde-suave);
 }
+.galeria-principal {
+  position: relative;
+}
+.galeria-abrir {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.galeria-ampliar {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(28, 27, 26, 0.55);
+  color: #fff;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+/* Setas: só em telas com mouse (no celular a pessoa arrasta) */
+.galeria-seta {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .galeria-seta {
+    position: absolute;
+    top: 50%;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    margin-top: -20px;
+    border: 1px solid var(--linha);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--texto);
+    box-shadow: 0 2px 8px rgba(28, 27, 26, 0.15);
+    transition: opacity 0.15s;
+  }
+  .galeria-seta:hover {
+    border-color: var(--laranja);
+    color: var(--laranja);
+  }
+  .galeria-seta:disabled {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .galeria-seta-esquerda {
+    left: 0.75rem;
+  }
+  .galeria-seta-direita {
+    right: 0.75rem;
+  }
+}
+/* Miniaturas: no computador e tablet, embaixo da foto principal */
+.galeria-miniaturas {
+  display: none;
+}
+@media (min-width: 768px) {
+  .galeria-miniaturas {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    padding-bottom: 2px;
+  }
+  .galeria-miniaturas button {
+    flex: 0 0 auto;
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: var(--raio);
+    overflow: hidden;
+    background: var(--verde-suave);
+    opacity: 0.75;
+    transition:
+      opacity 0.15s,
+      border-color 0.15s;
+  }
+  .galeria-miniaturas button:hover,
+  .galeria-miniaturas button.ativa {
+    opacity: 1;
+  }
+  .galeria-miniaturas button.ativa {
+    border-color: var(--laranja);
+  }
+  .galeria-miniaturas img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
 .galeria-pontos {
   position: absolute;
   bottom: 0.8rem;
@@ -207,6 +311,11 @@ figcaption {
   background: #fff;
   width: 22px;
   border-radius: 9px;
+}
+@media (min-width: 768px) {
+  .galeria-pontos {
+    display: none; /* no computador as miniaturas fazem esse papel */
+  }
 }
 .pagina-animal-texto {
   padding-top: 1.25rem;

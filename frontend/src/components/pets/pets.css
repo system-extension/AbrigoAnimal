@@ -91,3 +91,136 @@
   font-weight: 700;
   font-size: 0.92rem;
 }
+
+/* ------------------------- Fotos em tela cheia ------------------------- */
+.visualizador {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  background: #0d0d0c;
+  color: #fff;
+}
+.visualizador-topo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(0.75rem + env(safe-area-inset-top)) 1rem 0.75rem;
+  background: linear-gradient(rgba(0, 0, 0, 0.55), transparent);
+  pointer-events: none;
+}
+.visualizador-topo > * {
+  pointer-events: auto;
+}
+.visualizador-contador {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.visualizador-botao {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 1.2rem;
+}
+.visualizador-botao:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+.visualizador-trilho {
+  flex: 1;
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+.visualizador-trilho::-webkit-scrollbar {
+  display: none;
+}
+.visualizador-trilho.com-zoom {
+  overflow-x: hidden; /* com zoom, arrastar anda pela foto em vez de trocar de foto */
+}
+.visualizador-item {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  overflow: hidden;
+}
+.visualizador-area {
+  width: 100%;
+  height: 100%;
+  touch-action: pan-x; /* arrastar de lado troca de foto; pinça e toque duplo ficam com a tela */
+  cursor: zoom-in;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.visualizador-area.com-zoom {
+  touch-action: none;
+  cursor: zoom-out;
+}
+.visualizador-area img {
+  /* a imagem ocupa a área toda e o "contain" encaixa a foto: assim o zoom e o arrastar
+     usam as medidas da área */
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform-origin: center;
+  -webkit-user-drag: none;
+}
+.visualizador-area img.animado {
+  transition: transform 0.2s ease-out;
+}
+.visualizador-seta {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .visualizador-seta {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    display: grid;
+    margin-top: -22px;
+  }
+  .visualizador-seta:disabled {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .visualizador-seta-esquerda {
+    left: 1rem;
+  }
+  .visualizador-seta-direita {
+    right: 1rem;
+  }
+}
+.visualizador-dica {
+  position: absolute;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+}
+.visualizador-dica .so-mouse {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .visualizador-dica .so-mouse {
+    display: inline;
+  }
+  .visualizador-dica .so-toque {
+    display: none;
+  }
+}

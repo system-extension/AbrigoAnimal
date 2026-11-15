@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { buscarAnimal } from '../../api/vitrine';
 import { PORTES, rotulo, SEXOS, textoIdade, VACINAS } from '../../api/rotulos';
@@ -8,38 +8,118 @@ import Carregando from '../../components/ui/Carregando';
 import Vazio from '../../components/ui/Vazio';
 import { useAvisos } from '../../context/Avisos';
 import TrilhoVideos from '../../components/pets/Videos';
+import VisualizadorFotos from '../../components/pets/VisualizadorFotos';
 import './paginas.css';
 
+/**
+ * Fotos do animal.
+ * - Celular: arrasta de lado; os pontinhos mostram em qual foto está.
+ * - Computador: setas nas laterais e miniaturas clicáveis embaixo.
+ * - Tocar/clicar na foto abre a tela cheia com zoom (VisualizadorFotos).
+ */
 function Galeria({ animal }) {
   const [atual, setAtual] = useState(0);
+  const [telaCheia, setTelaCheia] = useState(null); // índice da foto aberta em tela cheia
   const trilho = useRef(null);
-  const fotos = animal.fotos?.length ? animal.fotos : [null];
+  const temFotos = animal.fotos?.length > 0;
+  const fotos = temFotos ? animal.fotos : [null];
+  const fecharTelaCheia = useCallback(() => setTelaCheia(null), []);
 
   const aoRolar = () => {
     const t = trilho.current;
     if (t) setAtual(Math.round(t.scrollLeft / t.clientWidth));
   };
 
+  const irPara = (indice) => {
+    const t = trilho.current;
+    const destino = Math.min(fotos.length - 1, Math.max(0, indice));
+    t.scrollTo({ left: destino * t.clientWidth, behavior: 'smooth' });
+  };
+
   return (
     <div className="galeria">
-      <div className="galeria-trilho" ref={trilho} onScroll={aoRolar}>
-        {fotos.map((src, i) => (
-          <div className="galeria-item" key={src ?? i}>
-            <FotoAnimal
-              src={src}
-              nome={animal.nome}
-              especie={animal.especie}
-              carregamento={i === 0 ? 'eager' : 'lazy'}
-            />
-          </div>
-        ))}
-      </div>
-      {fotos.length > 1 && (
-        <div className="galeria-pontos" aria-hidden="true">
-          {fotos.map((_, i) => (
-            <span key={i} className={i === atual ? 'ativo' : ''} />
+      <div className="galeria-principal">
+        <div className="galeria-trilho" ref={trilho} onScroll={aoRolar}>
+          {fotos.map((src, i) => (
+            <div className="galeria-item" key={src ?? i}>
+              {src ? (
+                <button
+                  type="button"
+                  className="galeria-abrir"
+                  onClick={() => setTelaCheia(i)}
+                  aria-label={`Ver foto ${i + 1} de ${animal.nome} em tela cheia`}
+                >
+                  <FotoAnimal
+                    src={src}
+                    nome={animal.nome}
+                    especie={animal.especie}
+                    carregamento={i === 0 ? 'eager' : 'lazy'}
+                  />
+                </button>
+              ) : (
+                <FotoAnimal src={null} nome={animal.nome} especie={animal.especie} />
+              )}
+            </div>
           ))}
         </div>
+        {fotos.length > 1 && (
+          <>
+            <button
+              type="button"
+              className="galeria-seta galeria-seta-esquerda"
+              onClick={() => irPara(atual - 1)}
+              disabled={atual === 0}
+              aria-label="Foto anterior"
+            >
+              <i className="fa-solid fa-chevron-left" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="galeria-seta galeria-seta-direita"
+              onClick={() => irPara(atual + 1)}
+              disabled={atual === fotos.length - 1}
+              aria-label="Próxima foto"
+            >
+              <i className="fa-solid fa-chevron-right" aria-hidden="true" />
+            </button>
+            <div className="galeria-pontos" aria-hidden="true">
+              {fotos.map((_, i) => (
+                <span key={i} className={i === atual ? 'ativo' : ''} />
+              ))}
+            </div>
+          </>
+        )}
+        {temFotos && (
+          <span className="galeria-ampliar" aria-hidden="true">
+            <i className="fa-solid fa-expand" />
+          </span>
+        )}
+      </div>
+
+      {fotos.length > 1 && (
+        <div className="galeria-miniaturas">
+          {fotos.map((src, i) => (
+            <button
+              type="button"
+              key={src}
+              className={i === atual ? 'ativa' : ''}
+              onClick={() => irPara(i)}
+              aria-label={`Mostrar foto ${i + 1}`}
+              aria-current={i === atual ? 'true' : undefined}
+            >
+              <img src={src} alt="" loading="lazy" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {telaCheia !== null && (
+        <VisualizadorFotos
+          fotos={animal.fotos}
+          inicial={telaCheia}
+          nome={animal.nome}
+          aoFechar={fecharTelaCheia}
+        />
       )}
     </div>
   );
