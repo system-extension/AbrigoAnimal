@@ -1,5 +1,7 @@
-# Ambiente LOCAL de desenvolvimento: só o banco.
-# Uso: docker compose up -d
+# Ambiente LOCAL de desenvolvimento.
+# Uso:
+#   docker compose up -d                  → só o banco (fotos gravadas em disco, ARMAZENAMENTO_TIPO=disco)
+#   docker compose --profile s3 up -d     → banco + servidor S3 local, para testar as fotos como no R2 (ADR 0015)
 services:
   postgres:
     image: postgres:17-alpine
@@ -17,5 +19,20 @@ services:
       timeout: 3s
       retries: 10
 
+  # "R2 de mentira": Silo, fork comunitário do MinIO (a imagem oficial do MinIO saiu do Docker Hub).
+  # Fala o protocolo S3, igual ao Cloudflare R2. Senhas só de desenvolvimento.
+  s3:
+    image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z
+    profiles: ["s3"]
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: abrigo
+      MINIO_ROOT_PASSWORD: abrigo-dev-s3
+    ports:
+      - "9000:9000"
+    volumes:
+      - dados-s3:/data
+
 volumes:
   dados-postgres:
+  dados-s3:

@@ -65,7 +65,9 @@ class OpenGraphController {
         meta(sb, "og:description", descricao);
         meta(sb, "og:url", urlPublica + "/animais/" + slug);
         if (a.fotoPrincipal() != null) {
-            meta(sb, "og:image", urlPublica + a.fotoPrincipal());
+            // Com as fotos no R2 por domínio próprio, o endereço já vem completo (https://...).
+            String foto = a.fotoPrincipal();
+            meta(sb, "og:image", foto.startsWith("http") ? foto : urlPublica + foto);
         }
         sb.append("<meta name=\"twitter:card\" content=\"summary_large_image\">\n");
         return sb.toString();

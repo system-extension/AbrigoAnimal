@@ -68,8 +68,21 @@ management:
 
 abrigo:
   url-publica: ${URL_PUBLICA:http://localhost:8080}
+  # Onde ficam as fotos (ADR 0007 e 0015): "disco" (pasta local) ou "s3" (Cloudflare R2 em produção).
   armazenamento:
+    tipo: ${ARMAZENAMENTO_TIPO:disco}
     diretorio: ${ARMAZENAMENTO_DIR:./dados/arquivos}
+    s3:
+      endpoint: ${S3_ENDPOINT:}            # R2: https://<id-da-conta>.r2.cloudflarestorage.com
+      regiao: ${S3_REGIAO:auto}            # R2 usa "auto"
+      bucket: ${S3_BUCKET:}
+      chave-acesso: ${S3_CHAVE_ACESSO:}
+      chave-secreta: ${S3_CHAVE_SECRETA:}
+      # Endereço público do bucket (ex.: https://fotos.dominio-da-ong.org.br). Vazio = as fotos
+      # passam pelo backend em /arquivos/...; preenchido = o navegador busca direto da Cloudflare.
+      url-publica: ${ARMAZENAMENTO_URL_PUBLICA:}
+      # Só desenvolvimento: cria o bucket se ele não existir. Em produção o bucket é criado no painel.
+      criar-bucket: ${S3_CRIAR_BUCKET:false}
   admin:
     nome: ${ADMIN_NOME:Administrador}
     email: ${ADMIN_EMAIL:}

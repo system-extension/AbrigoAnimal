@@ -20,6 +20,7 @@
     <properties>
         <java.version>25</java.version>
         <spring-modulith.version>2.1.1</spring-modulith.version>
+        <aws-sdk.version>2.57.11</aws-sdk.version>
     </properties>
 
     <dependencyManagement>
@@ -31,10 +32,29 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws-sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
+        <!-- Fotos no Cloudflare R2 (fala o protocolo S3; ADR 0015). Só o cliente síncrono:
+             o cliente assíncrono (Netty) não é usado e fica fora do jar. -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>netty-nio-client</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <!-- Web (Spring Boot 4: "starter-web" virou "starter-webmvc") -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -2,11 +2,13 @@ package br.org.abrigo.plataforma.internal;
 
 import br.org.abrigo.plataforma.ArmazenamentoArquivos;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Locale;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -14,11 +16,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Implementação em disco do ArmazenamentoArquivos.
+ * Implementação em disco do ArmazenamentoArquivos (ARMAZENAMENTO_TIPO=disco, o padrão).
  * Serve para desenvolvimento e para uma hospedagem com volume persistente.
- * Troca prevista: implementação R2/S3 quando a hospedagem for decidida.
+ * Em produção, as fotos vão para o Cloudflare R2 (ArmazenamentoS3, ADR 0015).
  */
 @Component
+@ConditionalOnProperty(name = "abrigo.armazenamento.tipo", havingValue = "disco", matchIfMissing = true)
 class ArmazenamentoLocal implements ArmazenamentoArquivos {
 
     private static final Map<String, String> TIPOS = Map.of(
@@ -57,9 +60,13 @@ class ArmazenamentoLocal implements ArmazenamentoArquivos {
         if (!Files.isRegularFile(caminho)) {
             return Optional.empty();
         }
-        String extensao = chave.substring(chave.lastIndexOf('.') + 1).toLowerCase();
-        String tipo = TIPOS.getOrDefault(extensao, "application/octet-stream");
-        return Optional.of(new ArquivoArmazenado(new FileSystemResource(caminho), tipo));
+        return Optional.of(new ArquivoArmazenado(new FileSystemResource(caminho), tipoPelaChave(chave)));
+    }
+
+    /** Tipo do arquivo (Content-Type) pela extensão da chave. Usado também pelo ArmazenamentoS3. */
+    static String tipoPelaChave(String chave) {
+        String extensao = chave.substring(chave.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+        return TIPOS.getOrDefault(extensao, "application/octet-stream");
     }
 
     @Override
