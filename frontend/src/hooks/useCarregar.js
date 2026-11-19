@@ -39,11 +39,15 @@ export default function useCarregar(funcao, deps = []) {
   }, []);
 
   const recarregar = useCallback(() => setVersao((v) => v + 1), []);
+  // Busca de novo sem voltar para "carregando": a tela continua como está (com o aviso de erro,
+  // por exemplo) até a resposta chegar. Usado nas novas tentativas automáticas sem conexão.
+  const recarregarEmSilencio = useCallback(() => setSilencioso((n) => n + 1), []);
 
   return {
     carregando: estado.chave !== chave,
     dados: estado.dados,
     erro: estado.chave === chave ? estado.erro : null,
     recarregar,
+    recarregarEmSilencio,
   };
 }

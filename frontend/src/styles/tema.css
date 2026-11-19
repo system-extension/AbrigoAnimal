@@ -443,6 +443,8 @@ a {
 /* ------------------------------ Campos ------------------------------ */
 .campo {
   display: grid;
+  /* coluna que pode encolher: sem isso um campo com largura própria (data no iPhone) alarga o cartão */
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.4rem;
   margin-bottom: 1.15rem;
 }
@@ -482,6 +484,19 @@ textarea.entrada {
 }
 .entrada[aria-invalid='true'] {
   border-color: var(--perigo);
+}
+/* iPhone: o campo de data tem uma largura mínima própria e vazava do cartão. Sem a aparência
+   nativa ele respeita o width: 100%; o texto fica à esquerda, como nos outros campos. */
+input[type='date'].entrada {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
+}
+input[type='date'].entrada::-webkit-date-and-time-value {
+  text-align: left;
 }
 
 /* Interruptor (liga/desliga) grande, fácil de tocar */
@@ -714,6 +729,64 @@ textarea.entrada {
   font-size: 2.2rem;
   color: var(--verde-logo);
   margin-bottom: 0.75rem;
+}
+
+/* Não deu para carregar (<EstadoErro>): textos em textos/mensagens.js */
+.estado-erro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 30rem;
+  margin: 0 auto;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+.estado-erro-icone {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 1rem;
+  border-radius: 50%;
+  background: var(--laranja-suave);
+  color: var(--laranja);
+  font-size: 1.6rem;
+}
+.estado-erro-semConexao .estado-erro-icone {
+  background: #eef2f6;
+  color: #5b6b7d;
+}
+.estado-erro-titulo {
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--tinta);
+}
+.estado-erro-texto {
+  margin: 0 0 1.25rem;
+  color: var(--texto-suave);
+}
+.estado-erro-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Aviso no login quando a sessão terminou no meio do uso */
+.aviso-entrar {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--raio);
+  background: var(--laranja-suave);
+  color: var(--tinta);
+  font-size: 0.9rem;
+}
+.aviso-entrar i {
+  margin-top: 0.15rem;
+  color: var(--laranja);
 }
 
 @media (prefers-reduced-motion: reduce) {

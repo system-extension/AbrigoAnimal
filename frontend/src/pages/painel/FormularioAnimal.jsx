@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import * as api from '../../api/animais';
 import * as apadrinhamentos from '../../api/apadrinhamentos';
@@ -18,7 +18,7 @@ import {
   TIPOS_APOIO,
 } from '../../api/rotulos';
 import { CampoTexto, GrupoChips, Interruptor } from '../../components/ui/Campos';
-import SeletorFotos from '../../components/painel/SeletorFotos';
+import SeletorFotos, { MAX_FOTOS } from '../../components/painel/SeletorFotos';
 import Carregando from '../../components/ui/Carregando';
 import Folha from '../../components/ui/Folha';
 import TrilhoChips from '../../components/ui/TrilhoChips';
@@ -84,10 +84,75 @@ const CAMPOS_CONFLITO = [
   ['visivelNaVitrine', 'Vitrine'],
   ['situacao', 'Situação'],
 ];
+/** Animal como veio do servidor → estado do formulário. */
+function formDe(a) {
+  return {
+    ...VAZIO,
+    ...a,
+    sexo: a.sexo === 'INDEFINIDO' ? 'INDEFINIDO' : a.sexo,
+    cor: a.cor ?? '',
+    canil: a.canil ?? '',
+    chip: a.chip ?? '',
+    chipAdicional: a.chipAdicional ?? '',
+    medicacoes: a.medicacoes ?? '',
+    condicoesSaude: a.condicoesSaude ?? '',
+    descricao: a.descricao ?? '',
+    temperamento: a.temperamento ?? [],
+    idadeAnos: idadePorData(a.dataNascimentoEstimada),
+    vacinas: (a.vacinas ?? []).map((v) => ({ tipo: v.tipo, ultimaDose: v.ultimaDose ?? '' })),
+  };
+}
+
+/** Campos que a pessoa pode mudar na tela (o resto do estado é do servidor: id, versão, datas). */
+const CAMPOS_DO_FORMULARIO = [...Object.keys(VAZIO), 'situacao'];
+const igual = (x, y) => JSON.stringify(x ?? null) === JSON.stringify(y ?? null);
+
+/**
+ * "Ficar com o que eu fiz" sem apagar o trabalho da outra pessoa: parte do que ela salvou e
+ * aplica por cima SÓ os campos que eu mudei. Campo que os dois mudaram: vale o meu.
+ * Óbito registrado pela outra pessoa é definitivo: minha troca de situação é descartada.
+ * Devolve o formulário combinado e o que aconteceu, para avisar na tela.
+ */
+function combinar(meuInicio, meuAtual, deles) {
+  const combinado = formDe(deles);
+  const meus = [];
+  for (const campo of CAMPOS_DO_FORMULARIO) {
+    if (!igual(meuAtual[campo], meuInicio[campo])) {
+      combinado[campo] = meuAtual[campo];
+      meus.push(campo);
+    }
+  }
+  let obitoDeles = false;
+  if (deles.situacao === 'OBITO' && combinado.situacao !== 'OBITO') {
+    combinado.situacao = 'OBITO';
+    combinado.visivelNaVitrine = false;
+    obitoDeles = meus.includes('situacao') || meus.includes('visivelNaVitrine');
+  }
+  return { combinado, obitoDeles };
+}
+
+/** Resumo do que mudou nas fotos entre duas versões: "adicionou 2, removeu 1, trocou a principal". */
+function mudancasNasFotos(antes, depois) {
+  const idsAntes = new Set((antes?.fotos ?? []).map((x) => x.id));
+  const idsDepois = new Set((depois?.fotos ?? []).map((x) => x.id));
+  const adicionadas = [...idsDepois].filter((x) => !idsAntes.has(x)).length;
+  const removidas = [...idsAntes].filter((x) => !idsDepois.has(x)).length;
+  const principalAntes = antes?.fotos?.find((x) => x.principal)?.id;
+  const principalDepois = depois?.fotos?.find((x) => x.principal)?.id;
+  const partes = [];
+  if (adicionadas) partes.push(`adicionou ${adicionadas}`);
+  if (removidas) partes.push(`removeu ${removidas}`);
+  if (principalAntes !== principalDepois && principalDepois && idsAntes.has(principalDepois))
+    partes.push('trocou a principal');
+  return partes.length ? `Fotos (${partes.join(', ')})` : null;
+}
+
 function camposAlterados(antes, depois) {
-  return CAMPOS_CONFLITO.filter(
-    ([campo]) => JSON.stringify(antes?.[campo] ?? null) !== JSON.stringify(depois?.[campo] ?? null),
-  ).map(([, nome]) => nome);
+  const campos = CAMPOS_CONFLITO.filter(([campo]) => !igual(antes?.[campo], depois?.[campo])).map(
+    ([, nome]) => nome,
+  );
+  const fotos = mudancasNasFotos(antes, depois);
+  return fotos ? [...campos, fotos] : campos;
 }
 
 /** Estado da tela → corpo que o backend espera (AnimalRequest). */
@@ -150,7 +215,9 @@ export default function FormularioAnimal() {
   const [erros, setErros] = useState({});
   const [carregando, setCarregando] = useState(editando);
   const [salvando, setSalvando] = useState(false);
-  const [ocupadoFotos, setOcupadoFotos] = useState(false);
+  const [removidas, setRemovidas] = useState([]); // ids de fotos gravadas que a pessoa tirou
+  // principal quando a pessoa abriu o cadastro: só trocamos a principal no servidor se ela trocou
+  const [principalCarregada, setPrincipalCarregada] = useState(null);
   const [criado, setCriado] = useState(null);
   const [folhaObito, setFolhaObito] = useState(false);
   const [dataObito, setDataObito] = useState(new Date().toISOString().slice(0, 10));
@@ -181,24 +248,12 @@ export default function FormularioAnimal() {
   /* Carrega o animal (edição) ou oferece o rascunho (novo). */
   const aplicarAnimal = (a) => {
     setOriginal(a);
-    setF({
-      ...VAZIO,
-      ...a,
-      sexo: a.sexo === 'INDEFINIDO' ? 'INDEFINIDO' : a.sexo,
-      cor: a.cor ?? '',
-      canil: a.canil ?? '',
-      chip: a.chip ?? '',
-      chipAdicional: a.chipAdicional ?? '',
-      medicacoes: a.medicacoes ?? '',
-      condicoesSaude: a.condicoesSaude ?? '',
-      descricao: a.descricao ?? '',
-      temperamento: a.temperamento ?? [],
-      idadeAnos: idadePorData(a.dataNascimentoEstimada),
-      vacinas: (a.vacinas ?? []).map((v) => ({ tipo: v.tipo, ultimaDose: v.ultimaDose ?? '' })),
-    });
+    setF(formDe(a));
     setFotos(
-      a.fotos.map((x) => ({ chave: x.id, fotoId: x.id, url: x.url, principal: x.principal })),
+      a.fotos.map((x) => ({ chave: x.id, fotoId: x.id, url: x.mini, principal: x.principal })),
     );
+    setRemovidas([]);
+    setPrincipalCarregada(a.fotos.find((x) => x.principal)?.id ?? null);
   };
 
   useEffect(() => {
@@ -214,6 +269,48 @@ export default function FormularioAnimal() {
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  /*
+   * "Só visualizar": a tela não fica parada numa versão velha. A cada 30 s (e ao voltar para a
+   * aba) confere se alguém salvou e, se sim, mostra a versão nova com um aviso.
+   */
+  const versaoNaTela = useRef(null);
+  useEffect(() => {
+    versaoNaTela.current = original?.versao ?? null;
+  }, [original]);
+  useEffect(() => {
+    if (!somenteLeitura || !editando) return;
+    const conferir = async () => {
+      if (document.visibilityState === 'hidden') return;
+      const atual = await api.buscar(id).catch(() => null);
+      if (atual && atual.versao !== versaoNaTela.current) {
+        aplicarAnimal(atual);
+        avisar.info(`Atualizado com o que ${atual.atualizadoPorNome || 'outra pessoa'} salvou.`);
+      }
+    };
+    const relogio = setInterval(conferir, 30_000);
+    document.addEventListener('visibilitychange', conferir);
+    return () => {
+      clearInterval(relogio);
+      document.removeEventListener('visibilitychange', conferir);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [somenteLeitura, editando, id]);
+
+  /** "Editar mesmo assim": antes de liberar os campos, garante que a tela tem a versão mais nova. */
+  const editarMesmoAssim = async () => {
+    if (!alterado) {
+      const atual = await api.buscar(id).catch(() => null);
+      if (atual && atual.versao !== original?.versao) {
+        aplicarAnimal(atual);
+        avisar.info(
+          `Carregamos o que ${atual.atualizadoPorNome || 'outra pessoa'} salvou antes de você editar.`,
+        );
+      }
+    }
+    setSomenteLeitura(false);
+    setDecidiuEditar(true);
+  };
 
   /* Rascunho automático (só no cadastro novo; fotos não entram no rascunho). */
   useEffect(() => {
@@ -243,82 +340,128 @@ export default function FormularioAnimal() {
   );
 
   /* ------------------------------ Fotos ------------------------------ */
-  const adicionarFotos = async (blobs) => {
+  /*
+   * As fotos ficam "em espera" na tela até o Salvar/Cadastrar, como o resto do cadastro:
+   * adicionar, remover e trocar a principal só mexem nesta lista. O Cancelar descarta tudo
+   * (nada foi enviado). `removidas` guarda as fotos já gravadas que a pessoa tirou.
+   */
+  const marcarAlterado = () => setAlterado(true);
+
+  const adicionarFotos = (blobs) => {
     const novas = blobs.map((b, i) => ({
       chave: novoId(),
       url: URL.createObjectURL(b),
       blob: b,
       principal: fotos.length === 0 && i === 0,
-      enviando: editando,
     }));
     setFotos((l) => [...l, ...novas]);
-    if (!editando) return; // no cadastro novo, sobem junto com o "Salvar"
-
-    setOcupadoFotos(true);
-    try {
-      let atual;
-      for (const n of novas) atual = await api.enviarFoto(id, n.blob);
-      aplicarFotosDoServidor(atual);
-      avisar.sucesso(novas.length > 1 ? 'Fotos adicionadas' : 'Foto adicionada');
-    } catch (e) {
-      avisar.erro(e.message);
-      setFotos((l) => l.filter((x) => !novas.includes(x)));
-    } finally {
-      setOcupadoFotos(false);
-    }
+    marcarAlterado();
   };
 
-  const aplicarFotosDoServidor = (a) => {
-    setOriginal(a);
-    setFotos(
-      a.fotos.map((x) => ({ chave: x.id, fotoId: x.id, url: x.url, principal: x.principal })),
+  const removerFoto = (foto) => {
+    if (foto.fotoId) setRemovidas((r) => [...r, foto.fotoId]);
+    setFotos((l) => {
+      const resto = l.filter((x) => x !== foto);
+      if (foto.principal && resto[0]) resto[0] = { ...resto[0], principal: true };
+      return resto;
+    });
+    marcarAlterado();
+  };
+
+  const tornarPrincipal = (foto) => {
+    setFotos((l) =>
+      [foto, ...l.filter((x) => x !== foto)].map((x) => ({ ...x, principal: x === foto })),
     );
+    marcarAlterado();
   };
 
-  const removerFoto = async (foto) => {
-    if (!foto.fotoId) {
-      setFotos((l) => {
-        const resto = l.filter((x) => x !== foto);
-        if (foto.principal && resto[0]) resto[0] = { ...resto[0], principal: true };
-        return resto;
-      });
-      return;
-    }
-    if (!window.confirm('Remover esta foto?')) return;
-    setOcupadoFotos(true);
-    try {
-      aplicarFotosDoServidor(await api.removerFoto(id, foto.fotoId));
-    } catch (e) {
-      avisar.erro(e.message);
-    } finally {
-      setOcupadoFotos(false);
-    }
-  };
+  /**
+   * Leva para o servidor as mudanças de fotos que estavam em espera: primeiro remove (libera
+   * espaço no limite de 10), depois envia as novas e por fim acerta a principal.
+   * Devolve o animal como ficou no servidor.
+   */
+  const gravarFotos = async (animalId, atual) => {
+    const avisos = [];
+    let a = atual;
+    const noServidor = () => new Set(a.fotos.map((x) => x.id));
 
-  const tornarPrincipal = async (foto) => {
-    if (!foto.fotoId) {
-      setFotos((l) =>
-        [foto, ...l.filter((x) => x !== foto)].map((x) => ({ ...x, principal: x === foto })),
+    // 1. Remove só o que ainda existe: a outra pessoa pode ter removido a mesma foto antes.
+    for (const fotoId of removidas) {
+      if (noServidor().has(fotoId)) a = await api.removerFoto(animalId, fotoId);
+    }
+
+    // 2. Envia as novas que couberem no limite (a principal primeiro, se for nova).
+    const novas = fotos
+      .filter((x) => x.blob)
+      .sort((x, y) => Number(y.principal) - Number(x.principal));
+    const cabem = novas.slice(0, Math.max(0, MAX_FOTOS - a.fotos.length));
+    if (cabem.length < novas.length) {
+      avisos.push(
+        cabem.length
+          ? `Só ${cabem.length === 1 ? 'coube 1' : `couberam ${cabem.length}`} das suas ${novas.length} fotos novas: o limite é ${MAX_FOTOS} por animal e outra pessoa também adicionou fotos.`
+          : `Suas ${novas.length} fotos novas não couberam: o animal já tem ${MAX_FOTOS} fotos (outra pessoa adicionou antes).`,
       );
-      return;
     }
-    setOcupadoFotos(true);
+    const idDaNova = new Map();
+    for (const foto of cabem) {
+      const antes = noServidor();
+      a = await api.enviarFoto(animalId, foto.blob);
+      const nova = a.fotos.find((x) => !antes.has(x.id));
+      if (nova) idDaNova.set(foto, nova.id);
+    }
+
+    // 3. Principal: só mexe se EU troquei (senão manteria a escolha antiga por cima da outra pessoa).
+    const minha = fotos.find((x) => x.principal);
+    const euTroquei = minha && (minha.blob || minha.fotoId !== principalCarregada);
+    if (euTroquei) {
+      const principalId = minha.blob ? idDaNova.get(minha) : minha.fotoId;
+      if (!principalId) {
+        // a nova principal não coube: o aviso de limite já explica
+      } else if (!noServidor().has(principalId)) {
+        avisos.push(
+          'A foto que você escolheu como principal foi removida por outra pessoa; a principal continua a que estava.',
+        );
+      } else if (principalId !== a.fotos.find((x) => x.principal)?.id) {
+        a = await api.definirFotoPrincipal(animalId, principalId);
+      }
+    }
+    return { a, avisos };
+  };
+
+  /**
+   * Grava as fotos; se algo falhar no meio (internet caiu, por exemplo), os dados do cadastro já
+   * estão salvos: avisa, recarrega do servidor o que de fato ficou gravado e devolve null.
+   */
+  const gravarFotosOuAvisar = async (animalId, atual) => {
     try {
-      aplicarFotosDoServidor(await api.definirFotoPrincipal(id, foto.fotoId));
+      const { a, avisos } = await gravarFotos(animalId, atual);
+      avisos.forEach((texto) => avisar.info(texto));
+      return a;
     } catch (e) {
-      avisar.erro(e.message);
-    } finally {
-      setOcupadoFotos(false);
+      avisar.erro(
+        `Os dados foram salvos, mas nem todas as fotos: ${e.message} Confira e tente de novo.`,
+      );
+      if (editando) {
+        const recarregado = await api.buscar(animalId).catch(() => null);
+        if (recarregado) aplicarAnimal(recarregado);
+        setAlterado(false);
+      }
+      return null;
     }
   };
+
+  const temMudancaNasFotos =
+    removidas.length > 0 ||
+    fotos.some((x) => x.blob) ||
+    fotos.find((x) => x.principal)?.fotoId !== principalCarregada;
 
   /* ------------------------------ Salvar ----------------------------- */
   /** base: a versão sobre a qual salvar (no "salvar por cima" é a versão que a outra pessoa gravou). */
-  const salvar = async (ev, base = original) => {
+  const salvar = async (ev, base = original, form = f) => {
     ev?.preventDefault();
     const e = {};
-    if (!f.nome.trim()) e.nome = 'Informe o nome';
-    if (!f.especie) e.especie = 'Escolha cão ou gato';
+    if (!form.nome.trim()) e.nome = 'Informe o nome';
+    if (!form.especie) e.especie = 'Escolha cão ou gato';
     setErros(e);
     if (Object.keys(e).length) {
       document.getElementById('basico')?.scrollIntoView({ behavior: 'smooth' });
@@ -328,18 +471,18 @@ export default function FormularioAnimal() {
     setSalvando(true);
     try {
       if (editando) {
-        const a = await api.editar(id, paraApi(f, base));
-        if (a.visivelNaVitrine !== f.visivelNaVitrine)
-          await api.definirVitrine(id, f.visivelNaVitrine);
+        let a = await api.editar(id, paraApi(form, base));
+        a = await gravarSituacao(a, form);
+        if (a.visivelNaVitrine !== form.visivelNaVitrine && a.situacao !== 'OBITO')
+          a = await api.definirVitrine(id, form.visivelNaVitrine);
+        if (temMudancaNasFotos && !(await gravarFotosOuAvisar(id, a))) return;
         setAlterado(false);
         avisar.sucesso('Alterações salvas');
         navegar('/painel/animais');
         return;
       }
       let a = await api.criar(paraApi(f));
-      // fotos na ordem: a principal primeiro (o backend marca a primeira enviada como principal)
-      const ordem = [...fotos].sort((x, y) => Number(y.principal) - Number(x.principal));
-      for (const foto of ordem) a = await api.enviarFoto(a.id, foto.blob);
+      if (fotos.length) a = (await gravarFotosOuAvisar(a.id, a)) ?? a;
       if (!f.visivelNaVitrine) a = await api.definirVitrine(a.id, false);
       try {
         localStorage.removeItem(RASCUNHO);
@@ -362,11 +505,28 @@ export default function FormularioAnimal() {
     }
   };
 
-  const salvarPorCima = () => {
+  /**
+   * Junta o que a outra pessoa salvou com o que eu mudei (só os campos que mudei) e coloca na
+   * tela. Assim nem "Ficar com o que eu fiz" nem "Voltar e conferir" apagam o trabalho dela.
+   */
+  const juntarComOQueFoiSalvo = () => {
     const { atual } = conflito;
+    const { combinado, obitoDeles } = combinar(formDe(original), f, atual);
+    if (obitoDeles) {
+      const nome = atual.atualizadoPorNome || 'Outra pessoa da equipe';
+      avisar.info(
+        `${nome} registrou óbito: a situação não muda mais. O resto do que você fez vale.`,
+      );
+    }
+    setF(combinado);
     setOriginal(atual);
     setConflito(null);
-    salvar(null, atual);
+    return { atual, combinado };
+  };
+
+  const salvarPorCima = () => {
+    const { atual, combinado } = juntarComOQueFoiSalvo();
+    salvar(null, atual, combinado);
   };
 
   const descartarMinhas = () => {
@@ -376,10 +536,17 @@ export default function FormularioAnimal() {
     avisar.info('Pronto: agora a tela mostra o que a outra pessoa salvou.');
   };
 
-  /** Fechar a folha sem escolher: revisa na tela; o próximo "Salvar" grava por cima, consciente. */
+  /** Fechar a folha sem escolher: a tela mostra os dois trabalhos juntos para conferir antes de salvar. */
   const revisarAntes = () => {
-    if (conflito.atual) setOriginal(conflito.atual);
-    setConflito(null);
+    if (!conflito.atual) {
+      setConflito(null);
+      return;
+    }
+    const { atual } = juntarComOQueFoiSalvo();
+    const nome = atual.atualizadoPorNome || 'a outra pessoa';
+    avisar.info(
+      `A tela agora junta o que ${nome} salvou com o que você mudou. Confira e toque em Salvar.`,
+    );
   };
 
   const novoCadastro = () => {
@@ -391,32 +558,35 @@ export default function FormularioAnimal() {
   };
 
   /* --------------------------- Situação/Óbito ------------------------ */
-  const mudarSituacao = async (situacao) => {
-    if (!situacao || situacao === original.situacao) return;
-    try {
-      const a = await api.mudarSituacao(id, situacao);
-      setOriginal(a);
-      avisar.sucesso(`Situação: ${rotulo(SITUACOES, situacao)}`);
-    } catch (e) {
-      avisar.erro(e.message);
-    }
+  // Como o resto do cadastro, só vale no Salvar (Cancelar desfaz).
+  const mudarSituacao = (situacao) => {
+    if (situacao) mudar('situacao', situacao);
   };
 
-  const confirmarObito = async () => {
-    try {
-      const a = await api.registrarObito(id, dataObito);
-      setOriginal(a);
-      setF((x) => ({ ...x, visivelNaVitrine: false }));
-      setFolhaObito(false);
-      avisar.info(`Óbito registrado. ${a.nome} saiu da vitrine.`);
-    } catch (e) {
-      avisar.erro(e.message);
-    }
+  const confirmarObito = () => {
+    mudar('situacao', 'OBITO');
+    mudar('visivelNaVitrine', false);
+    setFolhaObito(false);
+    avisar.info('Óbito anotado: ele só é registrado quando você tocar em Salvar.');
+  };
+
+  const desfazerObito = () => {
+    mudar('situacao', original.situacao);
+    mudar('visivelNaVitrine', original.visivelNaVitrine);
+  };
+
+  /** Grava a situação depois dos dados (o óbito também tira da vitrine no servidor). */
+  const gravarSituacao = async (atual, form = f) => {
+    if (form.situacao === atual.situacao || atual.situacao === 'OBITO') return atual;
+    return form.situacao === 'OBITO'
+      ? api.registrarObito(id, dataObito)
+      : api.mudarSituacao(id, form.situacao);
   };
 
   if (carregando) return <Carregando texto="Abrindo cadastro…" />;
 
   const emObito = original?.situacao === 'OBITO';
+  const obitoPendente = !emObito && f.situacao === 'OBITO';
   // nome de quem salvou no conflito (nunca o e-mail)
   const quemSalvou = conflito?.atual?.atualizadoPorNome || 'Outra pessoa da equipe';
   const artigo = f.sexo === 'FEMEA' ? 'a' : 'o';
@@ -503,11 +673,7 @@ export default function FormularioAnimal() {
             >
               Só visualizar
             </button>
-            <button
-              type="button"
-              className="botao botao-contorno"
-              onClick={() => setDecidiuEditar(true)}
-            >
+            <button type="button" className="botao botao-contorno" onClick={editarMesmoAssim}>
               Editar mesmo assim
             </button>
           </div>
@@ -525,14 +691,7 @@ export default function FormularioAnimal() {
           <span>
             <i className="fa-solid fa-eye" aria-hidden="true" /> Você está só visualizando.
           </span>
-          <button
-            type="button"
-            className="botao botao-contorno"
-            onClick={() => {
-              setSomenteLeitura(false);
-              setDecidiuEditar(true);
-            }}
-          >
+          <button type="button" className="botao botao-contorno" onClick={editarMesmoAssim}>
             Editar mesmo assim
           </button>
         </div>
@@ -566,7 +725,8 @@ export default function FormularioAnimal() {
             aoAdicionar={adicionarFotos}
             aoRemover={removerFoto}
             aoTornarPrincipal={tornarPrincipal}
-            ocupado={ocupadoFotos || salvando}
+            ocupado={salvando}
+            pendente={editando && temMudancaNasFotos}
           />
         </Secao>
 
@@ -817,10 +977,12 @@ export default function FormularioAnimal() {
             <Interruptor
               titulo="Mostrar na vitrine"
               descricao={
-                emObito ? 'Indisponível após óbito' : 'Desligue para esconder do site público'
+                emObito || obitoPendente
+                  ? 'Indisponível após óbito'
+                  : 'Desligue para esconder do site público'
               }
-              marcado={f.visivelNaVitrine && !emObito}
-              aoMudar={(v) => !emObito && mudar('visivelNaVitrine', v)}
+              marcado={f.visivelNaVitrine && !emObito && !obitoPendente}
+              aoMudar={(v) => !emObito && !obitoPendente && mudar('visivelNaVitrine', v)}
             />
           </div>
         </Secao>
@@ -830,16 +992,27 @@ export default function FormularioAnimal() {
             id="situacao"
             icone="fa-signal"
             titulo="Situação"
-            descricao="Muda na hora, sem precisar salvar"
+            descricao="Vale quando você tocar em Salvar"
           >
             {emObito ? (
               <p className="mb-0 texto-suave">Óbito é definitivo: a situação não muda mais.</p>
+            ) : obitoPendente ? (
+              <div className="aviso-obito">
+                <p className="mb-2">
+                  <i className="fa-solid fa-dove" aria-hidden="true" /> Óbito em{' '}
+                  {new Date(dataObito + 'T12:00').toLocaleDateString('pt-BR')}: será registrado
+                  quando você tocar em <strong>Salvar</strong>.
+                </p>
+                <button type="button" className="botao botao-contorno" onClick={desfazerObito}>
+                  Desfazer
+                </button>
+              </div>
             ) : (
               <>
                 <GrupoChips
                   rotulo="Situação atual"
                   opcoes={SITUACOES.filter((s) => s.valor !== 'OBITO')}
-                  valor={original.situacao}
+                  valor={f.situacao}
                   aoMudar={mudarSituacao}
                 />
                 <button
@@ -892,6 +1065,7 @@ export default function FormularioAnimal() {
         )}
       </fieldset>
 
+      {/* Salvar só fica disponível depois de alguma mudança (campos, fotos, situação, óbito) */}
       <div className="barra-salvar">
         <Link to="/painel/animais" className="botao botao-contorno">
           {somenteLeitura ? 'Voltar' : 'Cancelar'}
@@ -899,7 +1073,7 @@ export default function FormularioAnimal() {
         <button
           type="submit"
           className="botao botao-principal botao-grande"
-          disabled={salvando || ocupadoFotos || somenteLeitura}
+          disabled={salvando || somenteLeitura || !alterado}
         >
           {salvando ? (
             <>
@@ -997,8 +1171,8 @@ export default function FormularioAnimal() {
 
       <Folha aberta={folhaObito} aoFechar={() => setFolhaObito(false)} titulo="Registrar óbito">
         <p>
-          {original?.nome} sai da vitrine e o cadastro fica guardado.{' '}
-          <strong>Não dá para desfazer.</strong>
+          {original?.nome} sai da vitrine e o cadastro fica guardado. O óbito é registrado ao tocar
+          em Salvar; <strong>depois disso, não dá para desfazer.</strong>
         </p>
         <CampoTexto
           rotulo="Data"

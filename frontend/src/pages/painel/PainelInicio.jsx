@@ -6,6 +6,7 @@ import useCarregar from '../../hooks/useCarregar';
 import { useSessao } from '../../context/Sessao';
 import { tempoRelativo } from '../../utils/formato';
 import Carregando from '../../components/ui/Carregando';
+import EstadoErro from '../../components/ui/EstadoErro';
 
 async function carregarResumo() {
   const [disp, idosos, trat, novas, semFoto] = await Promise.all([
@@ -31,7 +32,13 @@ function saudacao() {
 
 export default function PainelInicio() {
   const { usuario } = useSessao();
-  const { dados: r, carregando } = useCarregar(carregarResumo);
+  const {
+    dados: r,
+    carregando,
+    erro,
+    recarregar,
+    recarregarEmSilencio,
+  } = useCarregar(carregarResumo);
 
   return (
     <div>
@@ -49,7 +56,13 @@ export default function PainelInicio() {
         <i className="fa-solid fa-camera" aria-hidden="true" /> Cadastrar animal
       </Link>
 
-      {carregando || !r ? (
+      {erro && !r ? (
+        <EstadoErro
+          erro={erro}
+          aoTentarDeNovo={recarregar}
+          aoTentarEmSilencio={recarregarEmSilencio}
+        />
+      ) : carregando || !r ? (
         <Carregando />
       ) : (
         <>

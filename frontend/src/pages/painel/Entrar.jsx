@@ -3,10 +3,11 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/img/logo.webp';
 import { useSessao } from '../../context/Sessao';
 import { CampoTexto } from '../../components/ui/Campos';
+import { MENSAGENS } from '../../textos/mensagens';
 import './painel.css';
 
 export default function Entrar() {
-  const { usuario, entrar } = useSessao();
+  const { usuario, entrar, sessaoTerminou } = useSessao();
   const navegar = useNavigate();
   const { state } = useLocation();
   const [email, setEmail] = useState('');
@@ -44,6 +45,14 @@ export default function Entrar() {
         <img src={logo} alt="" width="84" height="84" className="mx-auto d-block mb-2" />
         <h1 className="h4 text-center">Área da equipe</h1>
         <p className="texto-suave text-center small">Acesso para a equipe do Abrigo Animal.</p>
+        {sessaoTerminou && (
+          <p className="aviso-entrar" role="status">
+            <i className={`fa-solid ${MENSAGENS.sessaoTerminou.icone}`} aria-hidden="true" />
+            <span>
+              <strong>{MENSAGENS.sessaoTerminou.titulo}.</strong> {MENSAGENS.sessaoTerminou.texto}
+            </span>
+          </p>
+        )}
         <CampoTexto
           rotulo="E-mail"
           type="email"

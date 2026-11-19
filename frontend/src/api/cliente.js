@@ -9,26 +9,44 @@
  *     para recarregarem suas listas sem piscar (ver hooks/useCarregar.js)
  */
 
+import { MENSAGENS } from '../textos/mensagens';
+
 /** Disparado em window depois de qualquer gravação bem-sucedida no backend. */
 export const EVENTO_DADOS = 'abrigo:dados-alterados';
+/** Disparado quando o login venceu no meio do uso (401): o contexto Sessao leva para o login. */
+export const EVENTO_SESSAO_TERMINOU = 'abrigo:sessao-terminou';
 const NAO_AVISA = ['/api/auth/', '/api/edicoes/'];
+
+/**
+ * Tipo do erro, que escolhe o aviso em textos/mensagens.js.
+ * "semConexao": a requisição nem chegou (status 0), o proxy da hospedagem respondeu que o sistema
+ * está fora (502/503/504) ou veio um 500 sem corpo (o proxy do Vite, em desenvolvimento, quando o
+ * backend está desligado). Um 500 de verdade do Spring sempre traz corpo.
+ */
+export function tipoDoErro(status, corpo) {
+  if (status === 0 || status === 502 || status === 503 || status === 504) return 'semConexao';
+  if (status === 500 && !corpo) return 'semConexao';
+  if (status === 401) return 'sessaoTerminou';
+  if (status === 403) return 'semPermissao';
+  if (status === 404) return 'naoEncontrado';
+  if (status === 409) return 'conflito';
+  if (status === 429) return 'muitasTentativas';
+  return 'generico';
+}
 
 export class ErroApi extends Error {
   constructor(status, corpo) {
-    super(corpo?.detail || corpo?.title || mensagemPadrao(status));
+    const tipo = tipoDoErro(status, corpo);
+    const padrao = MENSAGENS[tipo];
+    // Regras de negócio (400/409/422...) vêm com uma frase pronta do backend, em português.
+    // Falhas internas (5xx) nunca: o texto técnico (em inglês) não vai para a tela.
+    const doBackend = status >= 400 && status < 500 ? corpo?.detail : null;
+    super(doBackend || `${padrao.titulo}. ${padrao.texto}`);
     this.status = status;
+    this.tipo = tipo;
     /** Erros por campo do formulário: { nome: 'Informe o nome' } */
     this.campos = corpo?.campos || {};
   }
-}
-
-function mensagemPadrao(status) {
-  if (status === 401) return 'Sua sessão expirou. Entre novamente.';
-  if (status === 403) return 'Você não tem permissão para esta ação.';
-  if (status === 404) return 'Não encontrado.';
-  if (status === 409) return 'Outra pessoa alterou este cadastro. Recarregue a página.';
-  if (status === 429) return 'Muitas tentativas. Aguarde alguns minutos.';
-  return 'Não foi possível concluir. Tente novamente.';
 }
 
 function lerCookie(nome) {
@@ -67,7 +85,7 @@ export async function requisicao(caminho, { metodo = 'GET', corpo, formulario, k
       body: formulario ?? (corpo !== undefined ? JSON.stringify(corpo) : undefined),
     });
   } catch {
-    throw new ErroApi(0, { detail: 'Sem conexão. Verifique a internet e tente de novo.' });
+    throw new ErroApi(0, null);
   }
 
   if (resposta.ok && metodo !== 'GET' && !NAO_AVISA.some((p) => caminho.startsWith(p))) {
@@ -77,6 +95,9 @@ export async function requisicao(caminho, { metodo = 'GET', corpo, formulario, k
   }
   if (resposta.status === 204) return null;
   const dados = await resposta.json().catch(() => null);
+  if (resposta.status === 401 && !caminho.startsWith('/api/auth/')) {
+    window.dispatchEvent(new Event(EVENTO_SESSAO_TERMINOU));
+  }
   if (!resposta.ok) throw new ErroApi(resposta.status, dados);
   return dados;
 }

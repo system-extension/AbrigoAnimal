@@ -8,6 +8,7 @@ import mural4 from '../../assets/img/mural-4.webp';
 import { listarAnimais, listarVideos } from '../../api/vitrine';
 import TrilhoVideos from '../../components/pets/Videos';
 import useCarregar from '../../hooks/useCarregar';
+import EstadoErro from '../../components/ui/EstadoErro';
 import CartaoAnimal, { CartaoAnimalEsqueleto } from '../../components/pets/CartaoAnimal';
 import { CONTATO } from '../../utils/contato';
 import './paginas.css';
@@ -122,12 +123,11 @@ export default function Inicio() {
           </div>
         </div>
         {idosos.erro ? (
-          <div className="estado-conteudo" role="status">
-            <p>Não conseguimos carregar as histórias agora.</p>
-            <button type="button" className="botao botao-contorno" onClick={idosos.recarregar}>
-              Tentar novamente
-            </button>
-          </div>
+          <EstadoErro
+            erro={idosos.erro}
+            aoTentarDeNovo={idosos.recarregar}
+            aoTentarEmSilencio={idosos.recarregarEmSilencio}
+          />
         ) : (
           <div className="grade-animais">
             {idosos.carregando

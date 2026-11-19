@@ -124,7 +124,7 @@ export default function Interesse() {
       {a && (
         <div className="resumo-animal cartao">
           <FotoAnimal
-            src={a.fotoPrincipal}
+            src={a.fotoPrincipal?.mini}
             nome={a.nome}
             especie={a.especie}
             className="resumo-animal-foto"

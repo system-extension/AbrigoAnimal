@@ -13,8 +13,10 @@ export default function LayoutPublico() {
     else window.scrollTo(0, 0);
   }, [pathname, hash]);
 
+  // .layout-publico: a página ocupa pelo menos a altura da tela e o conteúdo cresce, então o
+  // rodapé fica sempre no fim, mesmo com pouco conteúdo (carregando, aviso de erro, 404).
   return (
-    <>
+    <div className="layout-publico">
       <a href="#conteudo" className="pular-conteudo">
         Pular para o conteúdo
       </a>
@@ -23,6 +25,6 @@ export default function LayoutPublico() {
         <Outlet />
       </main>
       <Rodape />
-    </>
+    </div>
   );
 }

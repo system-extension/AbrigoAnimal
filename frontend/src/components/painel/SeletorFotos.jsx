@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { comprimirFoto } from '../../utils/imagem';
 import { useAvisos } from '../../context/Avisos';
+import EscolherFotos from './EscolherFotos';
 
 export const MAX_FOTOS = 10;
 
@@ -11,7 +12,8 @@ export const MAX_FOTOS = 10;
  * - A primeira foto é a principal (a que aparece no cartão da vitrine).
  *
  * fotos: [{ chave, url, principal, fotoId?, blob?, enviando? }]
- * aoAdicionar(blobs[]) / aoRemover(foto) / aoTornarPrincipal(foto): quem usa decide se envia já ou depois.
+ * aoAdicionar(blobs[]) / aoRemover(foto) / aoTornarPrincipal(foto): só mexem na lista da tela;
+ * o formulário envia tudo no Salvar/Cadastrar. `pendente`: há mudança ainda não salva.
  */
 export default function SeletorFotos({
   fotos,
@@ -19,19 +21,26 @@ export default function SeletorFotos({
   aoRemover,
   aoTornarPrincipal,
   ocupado,
+  pendente = false,
 }) {
   const camera = useRef(null);
   const galeria = useRef(null);
   const [preparando, setPreparando] = useState(0);
+  const [excedentes, setExcedentes] = useState(null); // galeria trouxe mais fotos do que cabem
   const avisar = useAvisos();
   const restantes = MAX_FOTOS - fotos.length;
 
-  const escolher = async (e) => {
-    const arquivos = [...e.target.files].slice(0, restantes);
+  const escolher = (e) => {
+    const arquivos = [...e.target.files];
     e.target.value = '';
     if (!arquivos.length) return;
-    if (e.target.files.length > restantes)
-      avisar.info(`Limite de ${MAX_FOTOS} fotos: usamos as primeiras.`);
+    // Passou do limite: a pessoa escolhe quais entram (EscolherFotos), em vez de o sistema
+    // ficar com "as primeiras" sem ela saber quais são.
+    if (arquivos.length > restantes) setExcedentes(arquivos);
+    else preparar(arquivos);
+  };
+
+  const preparar = async (arquivos) => {
     setPreparando(arquivos.length);
     const blobs = [];
     for (const arq of arquivos) {
@@ -58,7 +67,10 @@ export default function SeletorFotos({
       ) : (
         <ul className="fotos-grade" aria-label="Fotos do animal">
           {fotos.map((f) => (
-            <li key={f.chave} className={`foto-item ${f.principal ? 'principal' : ''}`}>
+            <li
+              key={f.chave}
+              className={`foto-item ${f.principal ? 'principal' : ''} ${f.blob ? 'nova' : ''}`}
+            >
               <img src={f.url} alt="" />
               {f.enviando && (
                 <span className="foto-enviando">
@@ -97,6 +109,18 @@ export default function SeletorFotos({
         </ul>
       )}
 
+      {excedentes && (
+        <EscolherFotos
+          arquivos={excedentes}
+          limite={restantes}
+          aoCancelar={() => setExcedentes(null)}
+          aoConfirmar={(escolhidas) => {
+            setExcedentes(null);
+            preparar(escolhidas);
+          }}
+        />
+      )}
+
       {restantes > 0 && (
         <div className="fotos-botoes">
           <button
@@ -118,9 +142,16 @@ export default function SeletorFotos({
         </div>
       )}
       <p className="campo-dica mt-2 mb-0">
-        {fotos.length}/{MAX_FOTOS} fotos · toque na{' '}
+        {fotos.length}/{MAX_FOTOS} fotos
+        {restantes > 0 && ` · cabe${restantes === 1 ? '' : 'm'} mais ${restantes}`} · toque na{' '}
         <i className="fa-regular fa-star" aria-hidden="true" /> para escolher a principal
       </p>
+      {pendente && (
+        <p className="campo-dica aviso-pendente mt-1 mb-0">
+          <i className="fa-solid fa-circle-info" aria-hidden="true" /> As mudanças nas fotos só
+          valem depois de tocar em <strong>Salvar</strong>. Cancelar desfaz.
+        </p>
+      )}
 
       <input
         ref={camera}

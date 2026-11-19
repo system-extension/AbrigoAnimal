@@ -8,6 +8,7 @@ import useValorAtrasado from '../../hooks/useValorAtrasado';
 import FotoAnimal from '../../components/pets/FotoAnimal';
 import Carregando from '../../components/ui/Carregando';
 import Vazio from '../../components/ui/Vazio';
+import EstadoErro from '../../components/ui/EstadoErro';
 import CarregarMais from '../../components/ui/CarregarMais';
 import TrilhoChips from '../../components/ui/TrilhoChips';
 
@@ -35,7 +36,17 @@ export default function PainelAnimais() {
   // ?ate=N é controle da paginação, não filtro
   const { ate, ...filtros } = Object.fromEntries(params);
   const chaveFiltros = JSON.stringify(filtros);
-  const { dados, carregando, erro, temMais, carregarMais, carregandoMais, erroMais } = usePaginacao(
+  const {
+    dados,
+    carregando,
+    erro,
+    recarregar,
+    recarregarEmSilencio,
+    temMais,
+    carregarMais,
+    carregandoMais,
+    erroMais,
+  } = usePaginacao(
     (p) => api.listar({ ...filtros, busca: buscaAtiva || undefined, ...p }),
     [chaveFiltros, buscaAtiva],
     POR_PAGINA,
@@ -101,7 +112,11 @@ export default function PainelAnimais() {
       </TrilhoChips>
 
       {erro ? (
-        <Vazio icone="fa-wifi" titulo={erro.message} />
+        <EstadoErro
+          erro={erro}
+          aoTentarDeNovo={recarregar}
+          aoTentarEmSilencio={recarregarEmSilencio}
+        />
       ) : carregando && !dados ? (
         <Carregando />
       ) : dados.itens.length === 0 ? (
@@ -120,7 +135,7 @@ export default function PainelAnimais() {
               <li key={a.id}>
                 <Link to={`/painel/animais/${a.id}`} className="linha-animal">
                   <FotoAnimal
-                    src={a.fotoPrincipal}
+                    src={a.fotoPrincipal?.mini}
                     nome={a.nome}
                     especie={a.especie}
                     className="linha-animal-foto"

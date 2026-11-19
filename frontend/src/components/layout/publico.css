@@ -1,3 +1,17 @@
+.layout-publico {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.layout-publico > main {
+  flex: 1 0 auto;
+  /* o conteúdo ocupa pelo menos a tela toda abaixo do cabeçalho (68px + linha): com pouco
+     conteúdo (carregando, aviso de erro), o rodapé fica abaixo da dobra, nunca no meio da tela */
+  min-height: calc(100vh - 69px - env(safe-area-inset-top));
+  min-height: calc(100dvh - 69px - env(safe-area-inset-top));
+}
+
 .pular-conteudo {
   position: absolute;
   left: -999px;

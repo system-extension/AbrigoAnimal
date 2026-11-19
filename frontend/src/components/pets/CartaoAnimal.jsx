@@ -19,7 +19,12 @@ export default function CartaoAnimal({ animal, veioDaLista = false }) {
         aria-label={`Conhecer ${animal.nome}`}
       >
         <div className="cartao-animal-foto">
-          <FotoAnimal src={animal.fotoPrincipal} nome={animal.nome} especie={animal.especie} />
+          <FotoAnimal
+            fontes={animal.fotoPrincipal}
+            tamanhos="(min-width: 1200px) 25vw, (min-width: 768px) 33vw, 50vw"
+            nome={animal.nome}
+            especie={animal.especie}
+          />
           {animal.idoso && (
             <span className="selo selo-verde cartao-animal-selo">
               <i className="fa-solid fa-heart" aria-hidden="true" /> Idos{artigo}

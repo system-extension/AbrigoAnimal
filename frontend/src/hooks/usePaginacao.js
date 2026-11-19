@@ -58,6 +58,7 @@ export default function usePaginacao(buscar, deps, tamanho, chaveDo, opcoes = {}
     carregando: inicial.carregando,
     erro: inicial.erro,
     recarregar: inicial.recarregar,
+    recarregarEmSilencio: inicial.recarregarEmSilencio,
     dados: base && { ...base, itens },
     temMais,
     carregarMais,

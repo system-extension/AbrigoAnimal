@@ -4,6 +4,7 @@ import usePaginacao from '../../hooks/usePaginacao';
 import useRolagemRestaurada from '../../hooks/useRolagemRestaurada';
 import CartaoAnimal, { CartaoAnimalEsqueleto } from '../../components/pets/CartaoAnimal';
 import Vazio from '../../components/ui/Vazio';
+import EstadoErro from '../../components/ui/EstadoErro';
 import CarregarMais from '../../components/ui/CarregarMais';
 import TrilhoChips from '../../components/ui/TrilhoChips';
 import './paginas.css';
@@ -28,26 +29,35 @@ export default function Animais() {
     idoso: params.get('idoso') || undefined,
   };
   const chave = JSON.stringify(filtros);
-  const { dados, carregando, erro, recarregar, temMais, carregarMais, carregandoMais, erroMais } =
-    usePaginacao(
-      (p) => listarAnimais({ ...filtros, ...p }),
-      [chave],
-      POR_PAGINA,
-      (a) => a.slug,
-      {
-        // ?ate=3: quantas páginas estavam na tela (voltar da ficha não perde o que já foi carregado)
-        paginasIniciais: Number(params.get('ate')) || 1,
-        aoCarregarMais: (n) =>
-          setParams(
-            (atual) => {
-              const novo = new URLSearchParams(atual);
-              novo.set('ate', String(n));
-              return novo;
-            },
-            { replace: true },
-          ),
-      },
-    );
+  const {
+    dados,
+    carregando,
+    erro,
+    recarregar,
+    recarregarEmSilencio,
+    temMais,
+    carregarMais,
+    carregandoMais,
+    erroMais,
+  } = usePaginacao(
+    (p) => listarAnimais({ ...filtros, ...p }),
+    [chave],
+    POR_PAGINA,
+    (a) => a.slug,
+    {
+      // ?ate=3: quantas páginas estavam na tela (voltar da ficha não perde o que já foi carregado)
+      paginasIniciais: Number(params.get('ate')) || 1,
+      aoCarregarMais: (n) =>
+        setParams(
+          (atual) => {
+            const novo = new URLSearchParams(atual);
+            novo.set('ate', String(n));
+            return novo;
+          },
+          { replace: true },
+        ),
+    },
+  );
   useRolagemRestaurada('vitrine' + chave, !carregando && Boolean(dados));
 
   const ativo = (f) =>
@@ -101,11 +111,11 @@ export default function Animais() {
       )}
 
       {erro ? (
-        <Vazio icone="fa-wifi" titulo="Não conseguimos carregar os animais.">
-          <button type="button" className="botao botao-contorno mt-2" onClick={recarregar}>
-            Tentar de novo
-          </button>
-        </Vazio>
+        <EstadoErro
+          erro={erro}
+          aoTentarDeNovo={recarregar}
+          aoTentarEmSilencio={recarregarEmSilencio}
+        />
       ) : carregando ? (
         <div className="grade-animais mt-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (

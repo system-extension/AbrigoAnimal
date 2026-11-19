@@ -4,8 +4,8 @@ import { buscarAnimal } from '../../api/vitrine';
 import { PORTES, rotulo, SEXOS, textoIdade, VACINAS } from '../../api/rotulos';
 import useCarregar from '../../hooks/useCarregar';
 import FotoAnimal from '../../components/pets/FotoAnimal';
-import Carregando from '../../components/ui/Carregando';
-import Vazio from '../../components/ui/Vazio';
+import EstadoErro from '../../components/ui/EstadoErro';
+import { MENSAGENS } from '../../textos/mensagens';
 import { useAvisos } from '../../context/Avisos';
 import TrilhoVideos from '../../components/pets/Videos';
 import VisualizadorFotos from '../../components/pets/VisualizadorFotos';
@@ -16,6 +16,8 @@ import './paginas.css';
  * - Celular: arrasta de lado; os pontinhos mostram em qual foto está.
  * - Computador: setas nas laterais e miniaturas clicáveis embaixo.
  * - Tocar/clicar na foto abre a tela cheia com zoom (VisualizadorFotos).
+ * Cada lugar usa o menor tamanho que serve (ADR 0015): na foto principal o navegador escolhe
+ * entre média e original pela tela; mini nas miniaturas; original na tela cheia.
  */
 function Galeria({ animal }) {
   const [atual, setAtual] = useState(0);
@@ -40,9 +42,9 @@ function Galeria({ animal }) {
     <div className="galeria">
       <div className="galeria-principal">
         <div className="galeria-trilho" ref={trilho} onScroll={aoRolar}>
-          {fotos.map((src, i) => (
-            <div className="galeria-item" key={src ?? i}>
-              {src ? (
+          {fotos.map((foto, i) => (
+            <div className="galeria-item" key={foto?.grande ?? i}>
+              {foto ? (
                 <button
                   type="button"
                   className="galeria-abrir"
@@ -50,7 +52,8 @@ function Galeria({ animal }) {
                   aria-label={`Ver foto ${i + 1} de ${animal.nome} em tela cheia`}
                 >
                   <FotoAnimal
-                    src={src}
+                    fontes={foto}
+                    tamanhos="(min-width: 992px) 50vw, 100vw"
                     nome={animal.nome}
                     especie={animal.especie}
                     carregamento={i === 0 ? 'eager' : 'lazy'}
@@ -98,16 +101,16 @@ function Galeria({ animal }) {
 
       {fotos.length > 1 && (
         <div className="galeria-miniaturas">
-          {fotos.map((src, i) => (
+          {fotos.map((foto, i) => (
             <button
               type="button"
-              key={src}
+              key={foto.grande}
               className={i === atual ? 'ativa' : ''}
               onClick={() => irPara(i)}
               aria-label={`Mostrar foto ${i + 1}`}
               aria-current={i === atual ? 'true' : undefined}
             >
-              <img src={src} alt="" loading="lazy" />
+              <img src={foto.mini} alt="" loading="lazy" />
             </button>
           ))}
         </div>
@@ -115,12 +118,49 @@ function Galeria({ animal }) {
 
       {telaCheia !== null && (
         <VisualizadorFotos
-          fotos={animal.fotos}
+          fotos={animal.fotos.map((f) => f.grande)}
           inicial={telaCheia}
           nome={animal.nome}
           aoFechar={fecharTelaCheia}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * Esqueleto da página do animal: o mesmo desenho (foto, nome, quadros de informação, texto) em
+ * cinza pulsando enquanto os dados chegam. A página já nasce com a altura certa, então o rodapé
+ * não aparece lá em cima nem "pula" quando os dados chegam.
+ */
+function AnimalEsqueleto() {
+  return (
+    <div className="pagina-animal" aria-busy="true" aria-label="Carregando o animal">
+      <div className="container pagina-animal-grade">
+        <div>
+          <div className="esq-barra py-3">
+            <span className="esqueleto esq-texto" style={{ width: '9rem' }} />
+            <span className="esqueleto esq-circulo" />
+          </div>
+          <div className="esqueleto esq-foto" />
+        </div>
+        <div className="pagina-animal-texto">
+          <span className="esqueleto esq-selo" />
+          <span className="esqueleto esq-titulo" />
+          <div className="infos">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <span key={i} className="esqueleto esq-info" />
+            ))}
+          </div>
+          {[100, 95, 80].map((largura) => (
+            <span
+              key={largura}
+              className="esqueleto esq-texto mt-3"
+              style={{ width: `${largura}%` }}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -140,7 +180,13 @@ function Info({ icone, rotulo: r, valor }) {
 export default function Animal() {
   const { slug } = useParams();
   const avisar = useAvisos();
-  const { dados: a, carregando, erro } = useCarregar(() => buscarAnimal(slug), [slug]);
+  const {
+    dados: a,
+    carregando,
+    erro,
+    recarregar,
+    recarregarEmSilencio,
+  } = useCarregar(() => buscarAnimal(slug), [slug]);
   const location = useLocation();
   const navegar = useNavigate();
 
@@ -154,22 +200,20 @@ export default function Animal() {
     }
   };
 
-  if (carregando) return <Carregando />;
+  if (carregando) return <AnimalEsqueleto />;
   if (erro)
     return (
       <div className="container secao">
-        <Vazio
-          titulo={
-            erro.status === 404
-              ? 'Este animal não está mais na vitrine.'
-              : 'Não foi possível carregar.'
-          }
+        <EstadoErro
+          erro={erro}
+          naoEncontrado={MENSAGENS.animalForaDaVitrine}
+          aoTentarDeNovo={recarregar}
+          aoTentarEmSilencio={recarregarEmSilencio}
         >
-          <p>Talvez ele já tenha encontrado um lar!</p>
           <Link to="/animais" className="botao botao-principal">
-            Ver outros animais
+            {MENSAGENS.botaoVerOutrosAnimais}
           </Link>
-        </Vazio>
+        </EstadoErro>
       </div>
     );
 

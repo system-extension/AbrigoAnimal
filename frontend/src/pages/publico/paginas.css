@@ -593,3 +593,51 @@ figcaption {
     padding-bottom: calc(7rem + env(safe-area-inset-bottom));
   }
 }
+
+/* Esqueleto da página do animal (AnimalEsqueleto): mesmas medidas da página pronta */
+.esq-barra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.esq-texto {
+  display: block;
+  height: 1rem;
+  border-radius: 8px;
+}
+.esq-circulo {
+  display: block;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+.esq-foto {
+  aspect-ratio: 1;
+  margin-inline: -0.75rem;
+  border-radius: 0;
+}
+@media (min-width: 576px) {
+  .esq-foto {
+    margin-inline: 0;
+    border-radius: var(--raio-lg);
+  }
+}
+.esq-selo {
+  display: inline-block;
+  width: 5.5rem;
+  height: 1.6rem;
+  margin-bottom: 0.75rem;
+  border-radius: 999px;
+}
+.esq-titulo {
+  display: block;
+  width: 60%;
+  height: 2.8rem;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+}
+.esq-info {
+  display: block;
+  height: 4.25rem;
+  border-radius: var(--raio);
+}

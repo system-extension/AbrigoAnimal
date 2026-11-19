@@ -8,6 +8,7 @@ import { numeroWhatsApp } from '../../utils/contato';
 import { useAvisos } from '../../context/Avisos';
 import Carregando from '../../components/ui/Carregando';
 import Vazio from '../../components/ui/Vazio';
+import EstadoErro from '../../components/ui/EstadoErro';
 import Folha from '../../components/ui/Folha';
 import { CampoTexto } from '../../components/ui/Campos';
 import TrilhoChips from '../../components/ui/TrilhoChips';
@@ -25,7 +26,7 @@ export default function PainelSolicitacoes() {
   const [aberta, setAberta] = useState(null);
   const [obs, setObs] = useState('');
   const avisar = useAvisos();
-  const { dados, carregando } = useCarregar(
+  const { dados, carregando, erro, recarregar, recarregarEmSilencio } = useCarregar(
     () => listarSolicitacoes({ status: aba === '' ? undefined : aba }),
     [aba],
   );
@@ -74,7 +75,13 @@ export default function PainelSolicitacoes() {
         ))}
       </TrilhoChips>
 
-      {carregando && !dados ? (
+      {erro && !dados ? (
+        <EstadoErro
+          erro={erro}
+          aoTentarDeNovo={recarregar}
+          aoTentarEmSilencio={recarregarEmSilencio}
+        />
+      ) : carregando && !dados ? (
         <Carregando />
       ) : lista.length === 0 ? (
         <Vazio icone="fa-inbox" titulo="Nada por aqui." />
