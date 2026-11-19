@@ -28,6 +28,12 @@ Banco vazio? Carregue dados fictícios com `backend/scripts/dados-teste.sql`.
 | `npm run build`  | Gera a versão de produção em `dist/`                            |
 | `npm run format` | Formata com Prettier                                            |
 
+## Textos de aviso
+
+Os avisos de "sem conexão", "sessão terminou", "não encontrado" e falhas inesperadas (título,
+texto e ícone) ficam todos em [`src/textos/mensagens.js`](src/textos/mensagens.js). Dá para
+editar sem mexer em mais nada; só não troque os nomes das chaves.
+
 ## Mais detalhes
 
 [docs/GUIA_FRONTEND.md](docs/GUIA_FRONTEND.md): estrutura, telas, decisões de UX, como ligar ao backend e pendências.

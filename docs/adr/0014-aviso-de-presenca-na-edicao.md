@@ -21,6 +21,9 @@ uma trava rígida deixaria o animal preso para todo mundo.
   **Só visualizar** (campos travados) ou **Editar mesmo assim**.
 - O **409 não descarta mais nada**: a tela mostra quem salvou, a que horas e quais campos mudaram;
   o que a pessoa digitou fica na tela, e ela escolhe salvar por cima, descartar o seu ou revisar.
+  "Salvar por cima" (e "revisar") juntam as duas versões: partem do que a outra pessoa salvou e
+  aplicam só os campos que esta pessoa mudou (ajuste de 15/11, depois de um teste com dois usuários
+  mostrar que reenviar o formulário inteiro desfazia o trabalho da outra pessoa).
 - Presença em memória no backend (`EdicoesEmAndamento`, módulo identidade): se o servidor
   reiniciar, os avisos voltam no próximo sinal. Rota genérica por tipo de cadastro; hoje só o
   animal usa.

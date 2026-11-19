@@ -27,6 +27,28 @@ aplicação). O teste da imagem Docker do B4 mostrou isso na prática: o contain
   comunitário do MinIO (a imagem oficial do MinIO deixou de ser publicada no Docker Hub). Os testes
   usam a mesma imagem via Testcontainers.
 
+## Versões menores de cada foto
+Cada foto enviada ganha, ao lado do original, uma **média** (lado menor 600 px) e uma **mini**
+(lado menor 240 px), em JPEG qualidade 0,85, geradas no servidor na hora do envio (`VersoesFoto`).
+O limite é no **lado menor** porque as telas recortam a foto (quadrado, 4:5): limitar o lado maior
+deixava a foto em pé do celular (900×1600) com 450 px de largura e ela ficava borrada.
+O navegador escolhe entre mini, média e original pelo espaço na tela e pela densidade da tela
+(`srcset`); celulares com tela muito densa acabam baixando o original na foto principal. Motivo: a lista de animais baixava o
+original (até 1600 px, ~400 KB) para mostrar um cartão de ~300 px; e a prévia do WhatsApp pode
+ignorar imagens grandes.
+- Chaves derivadas do original (`<uuid>-m.jpg`, `<uuid>-p.jpg`): o banco continua com uma chave
+  só, mais a coluna `com_versoes` (V9).
+- Gerar no servidor, não no navegador: as versões podem ser **refeitas a partir do original** a
+  qualquer momento (outro tamanho, outro formato). Para ler WEBP, que o Java não lê sozinho, entra
+  a biblioteca TwelveMonkeys (só leitura).
+- Fotos sem versões (enviadas antes desta mudança, ou que o Java não conseguiu ler) usam o
+  original nos três tamanhos. Não há rotina para gerar as que faltam: a produção começa sem
+  fotos, e no desenvolvimento basta reenviar. Se um dia os tamanhos mudarem, aí sim entra uma
+  rotina que refaz as versões a partir dos originais.
+- Custo: cerca de 25% a mais de espaço por foto.
+- Alternativa descartada por enquanto: redimensionar sob demanda na Cloudflare (Image
+  Transformations), que depende do domínio próprio, tem cota mensal e prende o sistema à Cloudflare.
+
 ## Alternativas consideradas
 - **Volume do Railway:** mais simples, mas prende as fotos a um servidor, pesa no backup e no
   tráfego da aplicação, e não tem CDN.

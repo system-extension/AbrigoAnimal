@@ -22,7 +22,7 @@ Base: `/api`. Erros no formato Problem Details: `{ title, status, detail, campos
 | POST | `/api/animais/{id}/situacao` | `{situacao}`: DISPONIVEL, EM_TRATAMENTO, ADOTADO |
 | POST | `/api/animais/{id}/obito` | `{data}` (estado final, sai da vitrine) |
 | POST | `/api/animais/{id}/vitrine` | `{visivel}` |
-| POST | `/api/animais/{id}/fotos` | multipart `arquivo` (JPG/PNG/WEBP, até 3 MB) |
+| POST | `/api/animais/{id}/fotos` | multipart `arquivo` (JPG/PNG/WEBP, até 3 MB). O servidor grava também a versão média e a mini |
 | DELETE | `/api/animais/{id}/fotos/{fotoId}` | Remover foto |
 | POST | `/api/animais/{id}/fotos/{fotoId}/principal` | Definir foto principal |
 | GET/POST/PUT | `/api/pessoas`, `/api/pessoas/{id}` | Cadastro de pessoas (`?busca=` por nome, e-mail, telefone) |
@@ -52,6 +52,25 @@ Base: `/api`. Erros no formato Problem Details: `{ title, status, detail, campos
 | GET | `/arquivos/{chave}` | Fotos |
 
 > O campo `site` do formulário é uma **isca para robôs**: deve existir escondido no HTML e ficar vazio.
+
+### Fotos nas respostas (ADR 0015)
+
+Toda foto vem em três tamanhos; cada tela usa o menor que serve:
+
+```json
+"fotoPrincipal": { "grande": "/arquivos/animais/…/a1b2.webp", "media": "/arquivos/animais/…/a1b2-m.jpg", "mini": "/arquivos/animais/…/a1b2-p.jpg" }
+```
+
+| Campo | Tamanho | Uso |
+|---|---|---|
+| `grande` | original (até 1600 px) | tela cheia com zoom |
+| `media` | lado menor até 600 px, JPEG | cartões da vitrine, foto da página, prévia do WhatsApp |
+| `mini` | lado menor até 240 px, JPEG | miniaturas, listas do painel |
+
+Vitrine: `fotoPrincipal` e `fotos[]` nesse formato. Painel: `fotoPrincipal` na lista e
+`fotos[] = {id, principal, grande, media, mini}` no cadastro. Foto sem versões (enviada antes
+desta mudança, ou que o servidor não conseguiu ler): os três campos apontam para o original. Com
+`ARMAZENAMENTO_URL_PUBLICA`, os endereços vêm completos (`https://fotos.<domínio>/…`).
 
 ## Corpo do animal (POST/PUT `/api/animais`)
 
