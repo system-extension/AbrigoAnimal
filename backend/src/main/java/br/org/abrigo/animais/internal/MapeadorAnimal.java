@@ -2,6 +2,7 @@ package br.org.abrigo.animais.internal;
 
 import br.org.abrigo.animais.AnimalResumo;
 import br.org.abrigo.animais.AnimalVitrine;
+import br.org.abrigo.animais.FotoUrls;
 import br.org.abrigo.animais.internal.domain.Animal;
 import br.org.abrigo.animais.internal.domain.FotoAnimal;
 import br.org.abrigo.animais.internal.domain.VacinaAnimal;
@@ -41,14 +42,14 @@ public class MapeadorAnimal {
                 a.usaMedicacaoContinua(), a.getMedicacoes(), a.getCondicoesSaude(),
                 a.getVacinas().stream().map(VacinaAnimal::getTipo).toList(),
                 a.getSituacao(),
-                a.fotoPrincipal().map(this::url).orElse(null),
-                a.getFotos().stream().map(this::url).toList());
+                a.fotoPrincipal().map(this::urls).orElse(null),
+                a.getFotos().stream().map(this::urls).toList());
     }
 
     public AnimalListagem paraListagem(Animal a) {
         return new AnimalListagem(a.getId(), a.getNome(), a.getEspecie(), a.getSexo(), a.getSituacao(),
                 a.isIdoso(), a.getChip(), a.getAla(), a.getCanil(), a.isVisivelNaVitrine(),
-                a.fotoPrincipal().map(this::url).orElse(null));
+                a.fotoPrincipal().map(this::urls).orElse(null));
     }
 
     public AnimalDetalhe paraDetalhe(Animal a) {
@@ -61,14 +62,25 @@ public class MapeadorAnimal {
                 a.getVacinas().stream().map(v -> new AnimalDetalhe.Vacina(v.getTipo(), v.getUltimaDose())).toList(),
                 a.getSituacao(), a.getDataObito(), a.isVisivelNaVitrine(),
                 a.getFotos().stream()
-                        .map(f -> new AnimalDetalhe.Foto(f.getId(), url(f), f.isPrincipal()))
+                        .map(f -> {
+                            FotoUrls u = urls(f);
+                            return new AnimalDetalhe.Foto(f.getId(), f.isPrincipal(), u.grande(), u.media(), u.mini());
+                        })
                         .toList(),
                 a.getCriadoEm(), a.getAtualizadoEm(), a.getAtualizadoPor(),
                 nomes.nomeDe(a.getAtualizadoPor()).orElse(null));
     }
 
-    private String url(FotoAnimal f) {
-        return armazenamento.urlPublica(f.getChaveArquivo());
+    /** Os três tamanhos da foto; sem versões (foto antiga), todos apontam para o original. */
+    private FotoUrls urls(FotoAnimal f) {
+        String chave = f.getChaveArquivo();
+        String grande = armazenamento.urlPublica(chave);
+        if (!f.isComVersoes()) {
+            return new FotoUrls(grande, grande, grande);
+        }
+        return new FotoUrls(grande,
+                armazenamento.urlPublica(VersoesFoto.chave(chave, VersoesFoto.Versao.MEDIA)),
+                armazenamento.urlPublica(VersoesFoto.chave(chave, VersoesFoto.Versao.MINI)));
     }
 
     private LocalDate hoje() {

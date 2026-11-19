@@ -35,20 +35,29 @@ public class FotoAnimal {
     @Column(nullable = false)
     private Instant adicionadaEm;
 
+    /** Tem as versões média e mini no armazenamento (ADR 0015)? Sem elas, as telas usam o original. */
+    @Column(nullable = false)
+    private boolean comVersoes;
+
     protected FotoAnimal() {
     }
 
-    FotoAnimal(Animal animal, String chaveArquivo, int ordem, boolean principal, Instant agora) {
+    FotoAnimal(Animal animal, String chaveArquivo, boolean comVersoes, int ordem, boolean principal, Instant agora) {
         this.id = UUID.randomUUID();
         this.animal = animal;
         this.chaveArquivo = chaveArquivo;
         this.ordem = ordem;
         this.principal = principal;
         this.adicionadaEm = agora;
+        this.comVersoes = comVersoes;
     }
 
     void marcarPrincipal(boolean principal) {
         this.principal = principal;
+    }
+
+    void mudarOrdem(int ordem) {
+        this.ordem = ordem;
     }
 
     public UUID getId() {
@@ -65,5 +74,9 @@ public class FotoAnimal {
 
     public int getOrdem() {
         return ordem;
+    }
+
+    public boolean isComVersoes() {
+        return comVersoes;
     }
 }

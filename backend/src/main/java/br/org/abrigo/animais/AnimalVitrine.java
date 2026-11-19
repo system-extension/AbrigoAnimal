@@ -25,6 +25,6 @@ public record AnimalVitrine(
         // só QUAIS vacinas tomou (as datas ficam no painel)
         List<TipoVacina> vacinas,
         SituacaoAnimal situacao,
-        String fotoPrincipal,
-        List<String> fotos) {
+        FotoUrls fotoPrincipal,
+        List<FotoUrls> fotos) {
 }

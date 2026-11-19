@@ -10,6 +10,8 @@ import br.org.abrigo.plataforma.ArmazenamentoArquivos;
 import br.org.abrigo.plataforma.Pagina;
 import br.org.abrigo.plataforma.RecursoNaoEncontradoException;
 import br.org.abrigo.plataforma.RegraNegocioException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,8 @@ import java.util.UUID;
 @Service
 @Transactional
 public class GestaoAnimais {
+
+    private static final Logger log = LoggerFactory.getLogger(GestaoAnimais.class);
 
     static final long TAMANHO_MAXIMO_FOTO = 3L * 1024 * 1024; // 3 MB (a foto já chega comprimida pelo celular)
 
@@ -110,13 +114,36 @@ public class GestaoAnimais {
                 .extensao();
         String chave = armazenamento.salvar("animais/" + id, extensao, conteudo);
         try {
-            animal.adicionarFoto(chave, Instant.now(clock));
+            boolean comVersoes = gravarVersoes(chave, conteudo);
+            animal.adicionarFoto(chave, comVersoes, Instant.now(clock));
         } catch (RuntimeException e) {
-            armazenamento.remover(chave); // não deixa arquivo órfão se a regra recusar
+            removerComVersoes(chave); // não deixa arquivo órfão se a regra recusar
             throw e;
         }
         removerArquivoSeTransacaoFalhar(chave);
         return responder(animal);
+    }
+
+    /**
+     * Grava a média e a mini ao lado do original (ADR 0015). Se a imagem não puder ser lida para
+     * reduzir, a foto entra mesmo assim, só com o original (as telas usam o original no lugar).
+     */
+    private boolean gravarVersoes(String chave, byte[] original) {
+        var versoes = VersoesFoto.gerar(original);
+        if (versoes.isEmpty()) {
+            log.warn("Não foi possível gerar as versões menores de {}: a foto fica só com o original.", chave);
+            return false;
+        }
+        versoes.get().forEach((versao, bytes) -> armazenamento.gravar(VersoesFoto.chave(chave, versao), bytes));
+        return true;
+    }
+
+    /** Apaga o original e as versões (apagar o que não existe não é erro). */
+    private void removerComVersoes(String chave) {
+        armazenamento.remover(chave);
+        for (VersoesFoto.Versao versao : VersoesFoto.Versao.values()) {
+            armazenamento.remover(VersoesFoto.chave(chave, versao));
+        }
     }
 
     public AnimalDetalhe removerFoto(UUID id, UUID fotoId) {
@@ -184,7 +211,7 @@ public class GestaoAnimais {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                armazenamento.remover(chave);
+                removerComVersoes(chave);
             }
         });
     }
@@ -195,7 +222,7 @@ public class GestaoAnimais {
             @Override
             public void afterCompletion(int status) {
                 if (status != STATUS_COMMITTED) {
-                    armazenamento.remover(chave);
+                    removerComVersoes(chave);
                 }
             }
         });

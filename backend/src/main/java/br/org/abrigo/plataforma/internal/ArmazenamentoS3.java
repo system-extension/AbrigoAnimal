@@ -81,12 +81,17 @@ class ArmazenamentoS3 implements ArmazenamentoArquivos {
     @Override
     public String salvar(String pasta, String extensao, byte[] conteudo) {
         String chave = pasta + "/" + UUID.randomUUID() + "." + extensao;
+        gravar(chave, conteudo);
+        return chave;
+    }
+
+    @Override
+    public void gravar(String chave, byte[] conteudo) {
         validarChave(chave);
         s3.putObject(b -> b.bucket(bucket).key(chave)
                         .contentType(ArmazenamentoLocal.tipoPelaChave(chave))
                         .cacheControl(CACHE_DAS_FOTOS),
                 RequestBody.fromBytes(conteudo));
-        return chave;
     }
 
     @Override

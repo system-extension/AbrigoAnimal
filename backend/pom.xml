@@ -21,6 +21,7 @@
         <java.version>25</java.version>
         <spring-modulith.version>2.1.1</spring-modulith.version>
         <aws-sdk.version>2.57.11</aws-sdk.version>
+        <twelvemonkeys.version>3.15.0</twelvemonkeys.version>
     </properties>
 
     <dependencyManagement>
@@ -54,6 +55,12 @@
                     <artifactId>netty-nio-client</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <!-- Lê fotos WEBP (o Java só lê JPG e PNG) para gerar as versões menores (ADR 0015) -->
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-webp</artifactId>
+            <version>${twelvemonkeys.version}</version>
         </dependency>
         <!-- Web (Spring Boot 4: "starter-web" virou "starter-webmvc") -->
         <dependency>

@@ -18,6 +18,12 @@ public interface ArmazenamentoArquivos {
      */
     String salvar(String pasta, String extensao, byte[] conteudo);
 
+    /**
+     * Grava com uma chave escolhida por quem chama (sobrescreve se já existir).
+     * Usado para as versões menores de uma foto, que derivam da chave do original.
+     */
+    void gravar(String chave, byte[] conteudo);
+
     Optional<ArquivoArmazenado> obter(String chave);
 
     void remover(String chave);

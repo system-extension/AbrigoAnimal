@@ -2,6 +2,7 @@ package br.org.abrigo.vitrine.internal;
 
 import br.org.abrigo.animais.AnimalVitrine;
 import br.org.abrigo.animais.Especie;
+import br.org.abrigo.animais.FotoUrls;
 import br.org.abrigo.animais.Porte;
 import br.org.abrigo.animais.Sexo;
 import br.org.abrigo.animais.SituacaoAnimal;
@@ -31,8 +32,8 @@ record AnimalPublicoResponse(
         String condicoesSaude,
         List<TipoVacina> vacinas,
         boolean disponivelParaAdocao,
-        String fotoPrincipal,
-        List<String> fotos) {
+        FotoUrls fotoPrincipal,
+        List<FotoUrls> fotos) {
 
     static AnimalPublicoResponse de(AnimalVitrine a) {
         return new AnimalPublicoResponse(a.nome(), a.slug(), a.especie(), a.sexo(), a.cor(), a.porte(),

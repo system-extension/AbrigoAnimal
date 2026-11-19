@@ -46,7 +46,8 @@ public record AnimalDetalhe(
         // nome da pessoa da equipe para as telas; null quando não é uma pessoa (ex.: carga inicial)
         String atualizadoPorNome) {
 
-    public record Foto(UUID id, String url, boolean principal) {
+    /** Uma foto do cadastro: id para remover/marcar principal + os três tamanhos (ADR 0015). */
+    public record Foto(UUID id, boolean principal, String grande, String media, String mini) {
     }
 
     public record Vacina(TipoVacina tipo, LocalDate ultimaDose) {

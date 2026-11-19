@@ -92,8 +92,8 @@ class AnimalTest {
     @Test
     void primeiraFotoViraPrincipalERemoverPrincipalPromoveAProxima() {
         Animal a = Animal.cadastrar(dados("Bob"));
-        FotoAnimal f1 = a.adicionarFoto("animais/x/1.jpg", AGORA);
-        FotoAnimal f2 = a.adicionarFoto("animais/x/2.jpg", AGORA);
+        FotoAnimal f1 = a.adicionarFoto("animais/x/1.jpg", true, AGORA);
+        FotoAnimal f2 = a.adicionarFoto("animais/x/2.jpg", true, AGORA);
 
         assertThat(f1.isPrincipal()).isTrue();
         assertThat(f2.isPrincipal()).isFalse();
@@ -105,12 +105,26 @@ class AnimalTest {
     }
 
     @Test
+    void fotoEscolhidaComoPrincipalPassaASerAPrimeira() {
+        Animal a = Animal.cadastrar(dados("Bob"));
+        FotoAnimal f1 = a.adicionarFoto("animais/x/1.jpg", true, AGORA);
+        FotoAnimal f2 = a.adicionarFoto("animais/x/2.jpg", true, AGORA);
+        FotoAnimal f3 = a.adicionarFoto("animais/x/3.jpg", true, AGORA);
+
+        a.definirFotoPrincipal(f3.getId());
+
+        assertThat(a.getFotos()).containsExactly(f3, f1, f2);
+        assertThat(f3.getOrdem()).isLessThan(f1.getOrdem());
+        assertThat(a.fotoPrincipal()).contains(f3);
+    }
+
+    @Test
     void limiteDeFotos() {
         Animal a = Animal.cadastrar(dados("Bob"));
         for (int i = 0; i < Animal.MAXIMO_FOTOS; i++) {
-            a.adicionarFoto("k" + i, AGORA);
+            a.adicionarFoto("k" + i, true, AGORA);
         }
-        assertThatThrownBy(() -> a.adicionarFoto("extra", AGORA))
+        assertThatThrownBy(() -> a.adicionarFoto("extra", true, AGORA))
                 .isInstanceOf(RegraNegocioException.class);
     }
 

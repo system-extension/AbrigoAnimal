@@ -256,12 +256,13 @@ public class Animal extends EntidadeBase {
 
     // ------------------------------------------------------------------ fotos
 
-    public FotoAnimal adicionarFoto(String chaveArquivo, Instant agora) {
+    /** @param comVersoes as versões média e mini foram gravadas junto (ADR 0015) */
+    public FotoAnimal adicionarFoto(String chaveArquivo, boolean comVersoes, Instant agora) {
         if (fotos.size() >= MAXIMO_FOTOS) {
             throw new RegraNegocioException("Limite de " + MAXIMO_FOTOS + " fotos por animal atingido.");
         }
         int proximaOrdem = fotos.stream().mapToInt(FotoAnimal::getOrdem).max().orElse(-1) + 1;
-        FotoAnimal foto = new FotoAnimal(this, chaveArquivo, proximaOrdem, fotos.isEmpty(), agora);
+        FotoAnimal foto = new FotoAnimal(this, chaveArquivo, comVersoes, proximaOrdem, fotos.isEmpty(), agora);
         fotos.add(foto);
         return foto;
     }
@@ -276,9 +277,19 @@ public class Animal extends EntidadeBase {
         return foto.getChaveArquivo();
     }
 
+    /**
+     * Marca a principal e a coloca em primeiro na ordem: assim ela abre primeiro em todas as telas
+     * (galeria da página do animal, cadastro), não só no cartão.
+     */
     public void definirFotoPrincipal(UUID fotoId) {
         FotoAnimal escolhida = buscarFoto(fotoId);
         fotos.forEach(f -> f.marcarPrincipal(f.equals(escolhida)));
+        int menorOrdem = fotos.stream().mapToInt(FotoAnimal::getOrdem).min().orElse(0);
+        if (escolhida.getOrdem() > menorOrdem) {
+            escolhida.mudarOrdem(menorOrdem - 1);
+            fotos.remove(escolhida);
+            fotos.add(0, escolhida);
+        }
     }
 
     public Optional<FotoAnimal> fotoPrincipal() {

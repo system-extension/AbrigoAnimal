@@ -1,6 +1,7 @@
 package br.org.abrigo.animais.internal;
 
 import br.org.abrigo.animais.Especie;
+import br.org.abrigo.animais.FotoUrls;
 import br.org.abrigo.animais.Sexo;
 import br.org.abrigo.animais.SituacaoAnimal;
 
@@ -18,5 +19,5 @@ public record AnimalListagem(
         String ala,
         String canil,
         boolean visivelNaVitrine,
-        String fotoPrincipal) {
+        FotoUrls fotoPrincipal) {
 }

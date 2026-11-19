@@ -44,11 +44,16 @@ class ArmazenamentoLocal implements ArmazenamentoArquivos {
     @Override
     public String salvar(String pasta, String extensao, byte[] conteudo) {
         String chave = pasta + "/" + UUID.randomUUID() + "." + extensao;
+        gravar(chave, conteudo);
+        return chave;
+    }
+
+    @Override
+    public void gravar(String chave, byte[] conteudo) {
         Path destino = resolver(chave);
         try {
             Files.createDirectories(destino.getParent());
             Files.write(destino, conteudo);
-            return chave;
         } catch (IOException e) {
             throw new UncheckedIOException("Falha ao gravar arquivo " + chave, e);
         }
